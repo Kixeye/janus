@@ -33,7 +33,10 @@ import com.kixeye.core.janus.ServerStats;
 public interface LoadBalancer<T extends ServerStats> {
 
     /***
-     * Choose an available server from the list of servers.
+     * Choose an available server from the list of servers.  The list may
+     * contain unavailable servers, i.e. those currently short circuited,
+     * so the load balancer implementation is responsible for filtering
+     * those out.
      *
      * @return server if available, null otherwise
      */
