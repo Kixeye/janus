@@ -36,20 +36,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * This is a Eureka specific load balancer which selects a server instance with the fewest number of active
- * sessions.
+ * Eureka specific load balancer which selects a server instance with the
+ * fewest number of active sessions.
  *
- * A server instance's session count comes from a meta-data field called 'sessions' associated with the instance in Eureka.
- * Each server instance reports its session count with Eureka periodically.  Since the server instance list may be
- * cached on the client side, this strategy takes into account the number of sessions created per server instance from the
- * client since the last time its server instance cache was refreshed. This allows for more accurate load balancing between cache refresh
- * intervals.
+ * This load balancer gets an instance's session count comes from a Eureka
+ * meta-data field called 'sessions'.  Note that this is not a stock Eureka
+ * feature but rather something each server instance must manually adds to
+ * its heartbeat data.  Since the server instance list is cached client side,
+ * the load balancer also includes the number of local sessions it has created
+ * since the last update from Eureka.
  *
  * @author cbarry@kixeye.com
  */
 public class SessionLoadBalancer implements LoadBalancer<ServerStats> {
     private final static Logger log = LoggerFactory.getLogger(SessionLoadBalancer.class);
-    private final LoadingCache<String,IncrementalSession> incrementalSessions ;
+    private final LoadingCache<String,LocalSessionCount> incrementalSessions ;
 
     /**
      * Constructor
@@ -57,10 +58,10 @@ public class SessionLoadBalancer implements LoadBalancer<ServerStats> {
     public SessionLoadBalancer() {
         incrementalSessions = CacheBuilder.newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)
-                .build( new CacheLoader<String, IncrementalSession>() {
+                .build( new CacheLoader<String, LocalSessionCount>() {
                     @Override
-                    public IncrementalSession load(String key) throws Exception {
-                        return new IncrementalSession();
+                    public LocalSessionCount load(String key) throws Exception {
+                        return new LocalSessionCount();
                     }
                 });
     }
@@ -75,18 +76,29 @@ public class SessionLoadBalancer implements LoadBalancer<ServerStats> {
     public ServerStats choose(Collection<ServerStats> serverStats) {
         try {
             // Sort servers by number of sessions
-            PriorityQueue<Server> pq = new PriorityQueue<>(serverStats.size(), Server.comparator);
+            PriorityQueue<SessionServerTuple> pq = new PriorityQueue<>(serverStats.size(), SessionServerTuple.comparator);
             for (ServerStats stats : serverStats) {
+                // ignore short-circuited servers
                 if (!stats.getServerInstance().isAvailable()) {
                     continue;
                 }
-                if (stats.getServerInstance() instanceof EurekaServerInstance) {
-                    String id = stats.getServerInstance().getId();
-                    IncrementalSession incrementalSession = incrementalSessions.get(id);
-                    pq.add(new Server(stats, incrementalSession, log));
+
+                // reset incremental session count if the Eureka data has been updated
+                EurekaServerInstance instance = (EurekaServerInstance) stats.getServerInstance();
+                LocalSessionCount localSessions = incrementalSessions.get(instance.getId());
+                long timestamp = instance.getInstanceInfo().getLastUpdatedTimestamp();
+                int additionalSessions = 0;
+                if (localSessions.timestamp.get() == timestamp) {
+                    additionalSessions = localSessions.sessions.get();
+                } else {
+                    localSessions.timestamp.set(timestamp);
+                    localSessions.sessions.set(0);
                 }
+
+                // add server to priority queue to sort by total session count
+                pq.add(new SessionServerTuple(stats, additionalSessions, log));
             }
-            Server top = pq.peek();
+            SessionServerTuple top = pq.peek();
             if (top == null) {
                 return null;
             }
@@ -103,16 +115,24 @@ public class SessionLoadBalancer implements LoadBalancer<ServerStats> {
         }
     }
 
-    static class IncrementalSession {
+    /**
+     * Internal class tracking the number of local sessions created
+     * since the last Eureka refresh.
+     */
+    static class LocalSessionCount {
         AtomicLong timestamp = new AtomicLong(0);
         AtomicInteger sessions = new AtomicInteger(0);
     }
 
-    static class Server {
+    /**
+     * Internal tuple of the server, session with a comparator for sorting by
+     * session count.
+     */
+    static class SessionServerTuple {
         // sort by session count
-        public static Comparator<Server> comparator = new Comparator<Server>() {
+        public static Comparator<SessionServerTuple> comparator = new Comparator<SessionServerTuple>() {
             @Override
-            public int compare(Server o1, Server o2) {
+            public int compare(SessionServerTuple o1, SessionServerTuple o2) {
                 return o1.sessions - o2.sessions;
             }
         };
@@ -120,29 +140,17 @@ public class SessionLoadBalancer implements LoadBalancer<ServerStats> {
         public ServerStats stats;
         public int sessions;
 
-        public Server(ServerStats stats, IncrementalSession incrementalSessions, Logger log) {
+        public SessionServerTuple(ServerStats stats, int localSessionCount, Logger log) {
             this.stats = stats;
             this.sessions = Integer.MAX_VALUE;
 
-            // Get incremental sessions on top of base Eureka value.
-            // Reset if we have a new value from Eureka.
-            EurekaServerInstance instance = (EurekaServerInstance) stats.getServerInstance();
-            long timestamp = instance.getInstanceInfo().getLastUpdatedTimestamp();
-            int additionalSessions = 0;
-            if (incrementalSessions.timestamp.get() == timestamp) {
-                additionalSessions = incrementalSessions.sessions.get();
-            } else {
-                incrementalSessions.timestamp.set(timestamp);
-                incrementalSessions.sessions.set(0);
-            }
-
-            // Get session count from Eureka
-            Map<String,String> metadata = instance.getInstanceInfo().getMetadata();
+            // Get session count from Eureka meta-data
+            Map<String,String> metadata = ((EurekaServerInstance) stats.getServerInstance()).getInstanceInfo().getMetadata();
             if (metadata != null) {
                 String strSessions = metadata.get("sessions");
                 if (strSessions != null) {
                     try {
-                        this.sessions = additionalSessions + Integer.parseInt(strSessions);
+                        this.sessions = localSessionCount + Integer.parseInt(strSessions);
                     } catch (Exception e) {
                         log.error("Bad session value: " + strSessions);
                     }
