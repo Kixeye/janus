@@ -4,7 +4,34 @@
     <artifactId>janus</artifactId>
     <version>1.0.2-SNAPSHOT</version>
     <name>Janus</name>
-
+    <url>https://github.com/Kixeye/janus</url>
+    <description>Janus is a client-side HTTP and WebSocket client which does client-side load balancing.</description>
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>Elvir Bahtijaragic</name>
+            <email>ebahtijaragic@kixeye.com</email>
+            <organization>KIXEYE</organization>
+            <organizationUrl>http://www.kixeye.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Chad Barry</name>
+            <email>cbarry@kixeye.com</email>
+            <organization>KIXEYE</organization>
+            <organizationUrl>http://www.kixeye.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>David Turner</name>
+            <email>dturner@kixeye.com</email>
+            <organization>KIXEYE</organization>
+            <organizationUrl>http://www.kixeye.com</organizationUrl>
+        </developer>
+    </developers>
     <parent>
         <groupId>com.kixeye.core</groupId>
         <artifactId>core-parent</artifactId>
