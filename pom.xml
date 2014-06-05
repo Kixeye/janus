@@ -46,7 +46,7 @@
     </scm>
 
     <properties>
-        <core-transport.version>1.0.0</core-transport.version>
+        <core-transport.version>1.0.1-SNAPSHOT</core-transport.version>
     </properties>
 
     <build>
