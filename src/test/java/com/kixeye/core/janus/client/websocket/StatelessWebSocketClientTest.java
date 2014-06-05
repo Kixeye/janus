@@ -20,8 +20,21 @@
 package com.kixeye.core.janus.client.websocket;
 
 
-import java.nio.ByteBuffer;
-
+import com.codahale.metrics.MetricRegistry;
+import com.google.common.util.concurrent.SettableFuture;
+import com.kixeye.core.janus.Janus;
+import com.kixeye.core.janus.ServerInstance;
+import com.kixeye.core.janus.ServerStats;
+import com.kixeye.core.janus.ServerStatsFactory;
+import com.kixeye.core.janus.client.TestRestService;
+import com.kixeye.core.janus.client.TestRestService.PongMessage;
+import com.kixeye.core.janus.loadbalancer.RandomLoadBalancer;
+import com.kixeye.core.janus.serverlist.ConstServerList;
+import com.kixeye.core.transport.dto.Envelope;
+import com.kixeye.core.transport.serde.MessageSerDe;
+import com.kixeye.core.transport.serde.converter.JsonMessageSerDe;
+import com.kixeye.core.transport.websocket.WebSocketMessageRegistry;
+import com.netflix.config.ConfigurationManager;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
@@ -31,28 +44,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.util.SocketUtils;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
-
-import com.codahale.metrics.MetricRegistry;
-import com.google.common.util.concurrent.SettableFuture;
-import com.kixeye.core.janus.Janus;
-import com.kixeye.core.janus.ServerInstance;
-import com.kixeye.core.janus.ServerStats;
-import com.kixeye.core.janus.ServerStatsFactory;
-import com.kixeye.core.janus.client.TestRestService;
-import com.kixeye.core.janus.loadbalancer.RandomLoadBalancer;
-import com.kixeye.core.janus.serverlist.ConstServerList;
-import com.kixeye.core.transport.dto.Envelope;
-import com.kixeye.core.transport.serde.MessageSerDe;
-import com.kixeye.core.transport.serde.converter.JsonMessageSerDe;
-import com.kixeye.core.transport.websocket.WebSocketMessageRegistry;
-import com.netflix.config.ConfigurationManager;
+import java.nio.ByteBuffer;
 
 public class StatelessWebSocketClientTest {
 
     private final String VIP_TEST = "test";
 
     private MessageSerDe serDe;
-    private WebSocketMessageRegistry messageRegistry;
 
     @Before
     public void setConfiguration() {
@@ -82,9 +80,6 @@ public class StatelessWebSocketClientTest {
 
     private void runPingTest(AnnotationConfigWebApplicationContext context, String url) throws Exception {
         serDe = context.getBean(JsonMessageSerDe.class);
-        messageRegistry = context.getBean(WebSocketMessageRegistry.class);
-        messageRegistry.registerType("ping", TestRestService.PingMessage.class);
-        messageRegistry.registerType("pong", TestRestService.PongMessage.class);
 
         Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
                 VIP_TEST,
@@ -125,10 +120,9 @@ public class StatelessWebSocketClientTest {
         public void onWebSocketBinary(byte[] payload, int offset, int len) {
             try {
                 final Envelope envelope = serDe.deserialize(payload,offset,len,Envelope.class);
-                Class<?> messageClass = messageRegistry.getClassByTypeId(envelope.typeId);
-                Assert.assertEquals(messageClass,TestRestService.PongMessage.class);
+
                 byte[] rawPayload = envelope.payload.array();
-                TestRestService.PongMessage pong = (TestRestService.PongMessage) serDe.deserialize(rawPayload,0,rawPayload.length,messageClass);
+                TestRestService.PongMessage pong = (TestRestService.PongMessage) serDe.deserialize(rawPayload,0,rawPayload.length, PongMessage.class);
                 Assert.assertEquals( pong.messsage, "pong" );
 
                 // tell object we got the message
