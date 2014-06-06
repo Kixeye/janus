@@ -20,7 +20,12 @@
 package com.kixeye.core.janus;
 
 import com.codahale.metrics.MetricRegistry;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.kixeye.core.janus.loadbalancer.LoadBalancer;
+import com.kixeye.core.janus.loadbalancer.RandomLoadBalancer;
+import com.kixeye.core.janus.serverlist.ConfigServerList;
+import com.kixeye.core.janus.serverlist.ConstServerList;
 import com.kixeye.core.janus.serverlist.ServerList;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicLongProperty;
@@ -36,32 +41,32 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * This class provides the main entry point for retrieving the "best" server instance within a single service cluster.
  * It coordinates the discovery of available server instances (via {@link ServerList}) with a load balancing strategy {@link LoadBalancer}
  * to produce the best candidate server instance.
- *
+ * <p/>
  * {@link Janus} will cache internally the server instances returned by the {@link ServerList} for a period of time, and will only ask
  * the {@link ServerList} for server instances when the period has expired.  By default, the service instances will be cached for 30 seconds,
  * and this can be overridden by calling setRefreshIntervalInMillis OR by setting/updating the property "janus.refreshIntervalInMillis".
- *
+ * <p/>
  * {@link Janus} delegates the responsibility of service instance discovery to the {@link ServerList} provided to it, allowing for configurable
  * discovery strategies.  Janus provides some strategies out of the box:
+ *
+ * @author cbarry@kixeye.com
  * @see {@link com.kixeye.core.janus.serverlist.ConfigServerList}
  * @see {@link com.kixeye.core.janus.serverlist.ConstServerList}
  * @see {@link com.kixeye.core.janus.serverlist.EurekaServerList}
- *
- * {@link Janus} also delegates the responsibility of service instance selection to the {@link LoadBalancer} provided to it, allowing for configurable
- * load balancing strategies.  Janus provides some strategies out of the box:
+ *      <p/>
+ *      {@link Janus} also delegates the responsibility of service instance selection to the {@link LoadBalancer} provided to it, allowing for configurable
+ *      load balancing strategies.  Janus provides some strategies out of the box:
  * @see {@link com.kixeye.core.janus.loadbalancer.RandomLoadBalancer}
  * @see {@link com.kixeye.core.janus.loadbalancer.SessionLoadBalancer}
  * @see {@link com.kixeye.core.janus.loadbalancer.ZoneAwareLoadBalancer}
- *
- * For clients using HTTP or WebSockets to talk to their services, the Janus library provides some clients which integrate {@link Janus} for invoking
- * remote service endpoints.
+ *      <p/>
+ *      For clients using HTTP or WebSockets to talk to their services, the Janus library provides some clients which integrate {@link Janus} for invoking
+ *      remote service endpoints.
  * @see {@link com.kixeye.core.janus.client.rest.DefaultRestTemplateClient}
  * @see {@link com.kixeye.core.janus.client.http.async.AsyncHttpClient}
  * @see {@link com.kixeye.core.janus.client.websocket.SessionWebSocketClient}
  * @see {@link com.kixeye.core.janus.client.websocket.StatelessWebSocketClient}
  * @see {@link com.kixeye.core.janus.client.websocket.StatelessMessageClient}
- *
- * @author cbarry@kixeye.com
  */
 public class Janus<T extends ServerStats, U extends ServerInstance> {
 
@@ -82,12 +87,11 @@ public class Janus<T extends ServerStats, U extends ServerInstance> {
     private long nextUpdateTime = -1;
 
     /**
-     *
-     * @param serviceName the name of the service cluster
+     * @param serviceName    the name of the service cluster
      * @param metricRegistry metricRegistory used for server statistics tracking
-     * @param serverList the {@link ServerList} implementation
-     * @param loadBalancer the {@link LoadBalancer} implementation
-     * @param statsFactory factory class for the creation of {@link ServerStats}
+     * @param serverList     the {@link ServerList} implementation
+     * @param loadBalancer   the {@link LoadBalancer} implementation
+     * @param statsFactory   factory class for the creation of {@link ServerStats}
      */
     public Janus(String serviceName, MetricRegistry metricRegistry, ServerList<U> serverList, LoadBalancer<T> loadBalancer, ServerStatsFactory<T> statsFactory) {
         this.serviceName = serviceName;
@@ -100,18 +104,20 @@ public class Janus<T extends ServerStats, U extends ServerInstance> {
 
     /**
      * Sets the refresh interval of the internal server instance cache.
+     *
      * @param refreshInterval
      */
-    public void setRefreshInterval(long refreshInterval){
+    public void setRefreshInterval(long refreshInterval) {
         ConfigurationManager.getConfigInstance().setProperty(REFRESH_INTERVAL_IN_MILLIS, refreshInterval);
     }
 
     /**
      * Getter for refreshInteval
+     *
      * @return
      */
-    public long getRefreshInterval(){
-       return refreshInterval.get();
+    public long getRefreshInterval() {
+        return refreshInterval.get();
     }
 
     /**
@@ -173,6 +179,65 @@ public class Janus<T extends ServerStats, U extends ServerInstance> {
             logger.error("Exception updating the server list", e);
         } finally {
             updatingServer.set(false);
+        }
+    }
+
+    public static Builder builder(String serviceName) {
+        return new Builder(serviceName);
+    }
+
+    public static class Builder<T extends ServerStats, U extends ServerInstance> {
+        private String serviceName;
+        private MetricRegistry metricRegistry;
+        private ServerList serverList;
+        private LoadBalancer loadBalancer;
+        private ServerStatsFactory statsFactory;
+        private DynamicLongProperty refreshInterval = DynamicPropertyFactory.getInstance().getLongProperty(REFRESH_INTERVAL_IN_MILLIS, DEFAULT_REFRESH_INTERVAL_IN_MILLIS);
+
+        private Builder(String serviceName){
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(serviceName), "'serviceName' cannot be null or empty.");
+            this.serviceName = serviceName;
+        }
+
+        public Builder withMetricRegistry(MetricRegistry metricRegistry) {
+            this.metricRegistry = metricRegistry;
+            return this;
+        }
+
+        public Builder withServerList(ServerList serverList) {
+            this.serverList = serverList;
+            return this;
+        }
+
+        public Builder withLoadBalancer(LoadBalancer loadBalancer) {
+            this.loadBalancer = loadBalancer;
+            return this;
+        }
+
+        public Builder withStatsFactory(ServerStatsFactory statsFactory){
+            this.statsFactory = statsFactory;
+            return this;
+        }
+
+        public Janus<ServerStats, ServerInstance> build() {
+            if (metricRegistry == null) {
+                metricRegistry = new MetricRegistry();
+            }
+            if (serverList == null) {
+                serverList = new ConfigServerList(serviceName);
+            }
+            if (loadBalancer == null) {
+                loadBalancer = new RandomLoadBalancer();
+            }
+            if (statsFactory == null) {
+                statsFactory = new ServerStatsFactory(ServerStats.class);
+            }
+            return new Janus<ServerStats, ServerInstance>(serviceName, metricRegistry, serverList, loadBalancer, statsFactory);
+        }
+
+        public Builder forServers(String... servers) {
+            this.serverList = new ConstServerList(serviceName, servers);
+            return this;
         }
     }
 }

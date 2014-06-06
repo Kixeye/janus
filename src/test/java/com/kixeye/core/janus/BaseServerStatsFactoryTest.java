@@ -24,11 +24,11 @@ import com.codahale.metrics.MetricRegistry;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ServerStatsFactoryTest {
+public class BaseServerStatsFactoryTest {
     @Test
     public void normalConstructionTest() {
-        ServerStatsFactory<ServerStats> factory = new ServerStatsFactory<ServerStats>(ServerStats.class);
-        ServerStats stats = factory.createServerStats(new MetricRegistry(),new ServerInstance("test","http://localhost"));
+        BaseServerStatsFactory factory = new BaseServerStatsFactory(BaseServerStats.class, new MetricRegistry());
+        BaseServerStats stats = factory.createServerStats(new ServerInstance("test","http://localhost"));
         Assert.assertNotNull(stats);
 
         Assert.assertEquals(0, stats.getOpenRequestCount());
@@ -39,12 +39,12 @@ public class ServerStatsFactoryTest {
 
     @Test
     public void forceExceptionTest() {
-        ServerStatsFactory<BadServerStats> factory = new ServerStatsFactory<BadServerStats>(BadServerStats.class);
-        BadServerStats stats = factory.createServerStats(new MetricRegistry(),new ServerInstance("test","http://localhost"));
+        BaseServerStatsFactory factory = new BaseServerStatsFactory(BadServerStats.class,new MetricRegistry());
+        BaseServerStats stats = factory.createServerStats(new ServerInstance("test","http://localhost"));
         Assert.assertNull(stats);
     }
 
-    public static class BadServerStats extends ServerStats {
+    public static class BadServerStats extends BaseServerStats {
         private BadServerStats() {
         }
     }

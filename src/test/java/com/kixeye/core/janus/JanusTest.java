@@ -20,6 +20,7 @@
 package com.kixeye.core.janus;
 
 import com.codahale.metrics.MetricRegistry;
+import com.kixeye.core.janus.Janus.Builder;
 import com.kixeye.core.janus.loadbalancer.RandomLoadBalancer;
 import com.kixeye.core.janus.serverlist.ConstServerList;
 import com.netflix.config.ConfigurationManager;
@@ -136,5 +137,27 @@ public class JanusTest {
                 new RandomLoadBalancer(),
                 new ServerStatsFactory<ServerStats>(ServerStats.class) );
         Assert.assertNull(janus.getServer());
+    }
+
+    @Test
+    public void defaultBuilder() {
+        Janus<ServerStats,ServerInstance> janus = Janus.builder(VIP_TEST).build();
+        Assert.assertNull(janus.getServer());
+    }
+
+    @Test
+    public void defaultBuilder_withConstServerList() {
+        Builder builder = Janus.builder(VIP_TEST);
+        builder.withServerList(new ConstServerList(VIP_TEST, "http://localhost:0001"));
+        Janus<ServerStats, ServerInstance> janus = builder.build();
+        Assert.assertEquals("localhost", janus.getServer().getServerInstance().getHost());
+    }
+
+    @Test
+    public void defaultBuilder_forServers() {
+        Builder builder = Janus.builder(VIP_TEST);
+        builder.forServers("http://localhost:0001");
+        Janus<ServerStats, ServerInstance> janus = builder.build();
+        Assert.assertEquals("localhost", janus.getServer().getServerInstance().getHost());
     }
 }

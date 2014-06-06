@@ -26,22 +26,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Handles creation of a {@link ServerStats} for a given {@link ServerInstance}.
+ * Handles creation of a {@link BaseServerStats} for a given {@link ServerInstance}.
+ *
+ * @author cbarry@kixeye.com
  */
-public class ServerStatsFactory<T extends ServerStats> {
-    private final Logger logger = LoggerFactory.getLogger(Janus.class);
+public class ServerStatsFactory implements StatsFactory{
+    private final Logger logger = LoggerFactory.getLogger(ServerStatsFactory.class);
 
-    private Class<T> typeArgumentClass;
+    private MetricRegistry metricRegistry;
+    private Class<? extends BaseServerStats> typeArgumentClass;
 
-    public ServerStatsFactory(Class<T> typeArgumentClass) {
+    public ServerStatsFactory(Class<? extends BaseServerStats> typeArgumentClass, MetricRegistry metricRegistry) {
         this.typeArgumentClass = typeArgumentClass;
+        this.metricRegistry = metricRegistry;
     }
 
-    public T createServerStats(MetricRegistry metricRegistry, ServerInstance serverInstance) {
-        Preconditions.checkNotNull(metricRegistry, "'metricRegistry cannot be null.'");
-        Preconditions.checkNotNull(serverInstance, "'serverInstance cannot be null.'");
+    public BaseServerStats createServerStats(ServerInstance serverInstance) {
+        Preconditions.checkNotNull(metricRegistry, "'metricRegistry' cannot be null.");
+        Preconditions.checkNotNull(serverInstance, "'serverInstance' cannot be null.");
         try {
-            T stat = typeArgumentClass.newInstance();
+            BaseServerStats stat = typeArgumentClass.newInstance();
             stat.setServerInstance(serverInstance);
             stat.setMetricRegistry(metricRegistry);
             return stat;
@@ -50,4 +54,5 @@ public class ServerStatsFactory<T extends ServerStats> {
             return null;
         }
     }
+
 }

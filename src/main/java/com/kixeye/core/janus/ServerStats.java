@@ -30,13 +30,13 @@ import com.netflix.config.DynamicLongProperty;
 import com.netflix.config.DynamicPropertyFactory;
 
 /**
- *  Used to track usage statistics for a single server instance as within the context
- *  of a single {@link Janus} instance.  They are intended to be updated when requests/messages
- *  are sent/received from the remote server instance.
+ *  The default {@link ServerStats} implementation used by Janus
+ *
+ *  @see ServerStats
  *
  *  @author cbarry@kixeye.com
  */
-public class ServerStats {
+public class ServerStats implements ServerStats {
     protected final DynamicLongProperty propErrorThreshold = DynamicPropertyFactory.getInstance().getLongProperty("janus.errorThresholdPerSec", 5);
 
     protected MetricRegistry metrics;
@@ -62,7 +62,7 @@ public class ServerStats {
      * @param metricRegistry registry containing the metrics
      */
     public void setMetricRegistry(MetricRegistry metricRegistry) {
-        this.metrics = Preconditions.checkNotNull(metricRegistry, "'metricRegistry cannot be null.'");
+        this.metrics = Preconditions.checkNotNull(metricRegistry, "'metricRegistry' cannot be null.");
         this.openRequestCounter = metrics.counter(name(server.getId(), "open-requests"));
         this.openSessionsCounter = metrics.counter(name(server.getId(), "open-sessions"));
         this.sentMessageMeter = metrics.meter(name(server.getId(), "sent-messages"));
@@ -91,6 +91,7 @@ public class ServerStats {
      * setter for serverInstance
      * @param serverInstance the serverInstance
      */
+    @Override
     public void setServerInstance(ServerInstance serverInstance) {
         this.server = serverInstance;
     }
@@ -99,6 +100,7 @@ public class ServerStats {
      * getter for serverInstance
      * @return serverInstance
      */
+    @Override
     public ServerInstance getServerInstance() {
         return server;
     }
