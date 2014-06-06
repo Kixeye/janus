@@ -21,8 +21,6 @@ package com.kixeye.core.janus.client.websocket;
 
 import com.google.common.base.Preconditions;
 import com.kixeye.core.janus.Janus;
-import com.kixeye.core.janus.ServerInstance;
-import com.kixeye.core.janus.ServerStats;
 import com.kixeye.core.janus.client.exception.NoServerAvailableException;
 import com.kixeye.core.janus.client.exception.RetriesExceededException;
 import com.kixeye.core.transport.dto.Envelope;
@@ -54,7 +52,7 @@ import java.nio.ByteBuffer;
  *
  * @author cbarry@kixeye.com
  */
-public class StatelessMessageClient<X extends ServerStats, Y extends ServerInstance> extends StatelessWebSocketClient<X, Y> {
+public class StatelessMessageClient extends StatelessWebSocketClient {
 
     private final static Logger logger = LoggerFactory.getLogger(StatelessMessageClient.class);
 
@@ -71,7 +69,7 @@ public class StatelessMessageClient<X extends ServerStats, Y extends ServerInsta
      * @param serDe the {@link MessageSerDe} to serialize/de-serialize your message objects with
      * @param messageRegistry the {@link WebSocketMessageRegistry} used to register your message types with a typeId
      */
-    public StatelessMessageClient(Janus<X, Y> janus, int numRetries, WebSocketClient webSocketClient, MessageListener listener, MessageSerDe serDe, WebSocketMessageRegistry messageRegistry) {
+    public StatelessMessageClient(Janus janus, int numRetries, WebSocketClient webSocketClient, MessageListener listener, MessageSerDe serDe, WebSocketMessageRegistry messageRegistry) {
         super(janus, numRetries, "/" + serDe.getMessageFormatName(), webSocketClient, new WebSocketToMessageListenerBridge(listener, serDe, messageRegistry));
         this.serDe = Preconditions.checkNotNull(serDe, "'serDe' cannot be null.");
         this.messageRegistry = Preconditions.checkNotNull(messageRegistry,"'messageRegistry' cannot be null.");

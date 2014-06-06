@@ -34,17 +34,17 @@ import java.util.concurrent.TimeoutException;
 /**
  * An implementation of {@link WebSocketSession} which wraps Jetty's {@link Session} and adds
  * tracking of statistics about the messages sent to the remote endpoint. It is expected that
- * given {@link ServerStats} object corresponds to the remote endpoint represented by the given
+ * given {@link com.kixeye.core.janus.ServerStats} object corresponds to the remote endpoint represented by the given
  * {@link Session}.
  *
  * @author cbarry@kixeye.com
  */
-public class JettyWebSocketSession<X extends ServerStats> implements WebSocketSession {
+public class JettyWebSocketSession implements WebSocketSession {
 
-    private final X stats;
+    private final ServerStats stats;
     private final Session session;
 
-    public JettyWebSocketSession(X stats, Session session) {
+    public JettyWebSocketSession(ServerStats stats, Session session) {
         this.stats = Preconditions.checkNotNull(stats, "'stats' cannot be null.");
         this.session = Preconditions.checkNotNull(session, "'session' cannot be null.");
     }
@@ -58,7 +58,7 @@ public class JettyWebSocketSession<X extends ServerStats> implements WebSocketSe
     }
 
     /**
-     * @return
+     * @return whether or not the session is open
      * @see {@link WebSocketSession#isOpen()}
      */
     @Override
@@ -87,7 +87,7 @@ public class JettyWebSocketSession<X extends ServerStats> implements WebSocketSe
     public Future<Void> sendBytesByFuture(ByteBuffer data) {
         stats.incrementSentMessages();
         Future<Void> future = session.getRemote().sendBytesByFuture(data);
-        return new ProxyFuture<Void>(future);
+        return new ProxyFuture<>(future);
     }
 
     /**
@@ -123,7 +123,7 @@ public class JettyWebSocketSession<X extends ServerStats> implements WebSocketSe
     public Future<Void> sendStringByFuture(String text) {
         stats.incrementSentMessages();
         Future<Void> future = session.getRemote().sendStringByFuture(text);
-        return new ProxyFuture<Void>(future);
+        return new ProxyFuture<>(future);
     }
 
     /**

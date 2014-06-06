@@ -19,15 +19,17 @@
  */
 package com.kixeye.core.janus.client.http.async;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.codahale.metrics.MetricRegistry;
+import com.google.common.base.Charsets;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.kixeye.core.janus.ServerStats;
+import com.kixeye.core.janus.Janus;
+import com.kixeye.core.janus.ServerStatsFactory;
+import com.kixeye.core.janus.client.http.HttpMethod;
+import com.kixeye.core.janus.client.http.HttpRequest;
+import com.kixeye.core.janus.client.http.HttpResponse;
+import com.kixeye.core.janus.loadbalancer.RandomLoadBalancer;
+import com.kixeye.core.janus.serverlist.ConstServerList;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.eclipse.jetty.server.Request;
@@ -37,85 +39,77 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.codahale.metrics.MetricRegistry;
-import com.google.common.base.Charsets;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.kixeye.core.janus.Janus;
-import com.kixeye.core.janus.ServerInstance;
-import com.kixeye.core.janus.ServerStats;
-import com.kixeye.core.janus.ServerStatsFactory;
-import com.kixeye.core.janus.loadbalancer.RandomLoadBalancer;
-import com.kixeye.core.janus.serverlist.ConstServerList;
-import com.kixeye.core.janus.client.http.HttpMethod;
-import com.kixeye.core.janus.client.http.HttpRequest;
-import com.kixeye.core.janus.client.http.HttpResponse;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests the {@link AsyncHttpClient}
- * 
+ *
  * @author elvir
  */
 public class AsyncHttpClientTest {
     private static final String VIP_TEST = "test";
-    
-	private Server server;
-	
-	@Before
-	public void initialize() throws Exception {
-		server = new Server(0);
-		server.setHandler(new AbstractHandler() {
-			@Override
-			public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-				BufferedReader reader = request.getReader();
-				
-				String line;
-				while ((line = reader.readLine()) != null) {
-					response.getWriter().println(line);
-				}
-				
-				response.setStatus(HttpServletResponse.SC_OK);
-				baseRequest.setHandled(true);
-			}
-		});
-		server.start();
-	}
-	
-	@After
-	public void destroy() throws Exception {
-		server.stop();
-	}
-	
-	@Test
-	public void testGet() throws Exception {
-		Janus<ServerStats, ServerInstance> janus = new Janus<ServerStats, ServerInstance>(
+
+    private Server server;
+
+    @Before
+    public void initialize() throws Exception {
+        server = new Server(0);
+        server.setHandler(new AbstractHandler() {
+            @Override
+            public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+                BufferedReader reader = request.getReader();
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.getWriter().println(line);
+                }
+
+                response.setStatus(HttpServletResponse.SC_OK);
+                baseRequest.setHandled(true);
+            }
+        });
+        server.start();
+    }
+
+    @After
+    public void destroy() throws Exception {
+        server.stop();
+    }
+
+    @Test
+    public void testGet() throws Exception {
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST, "http://localhost:" + server.getURI().getPort()),
                 new RandomLoadBalancer(),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
-		AsyncHttpClient<ServerStats, ServerInstance> client = new AsyncHttpClient<ServerStats, ServerInstance>(janus, 0);
-		
-		ListenableFuture<HttpResponse> responseFuture = client.execute(new HttpRequest(HttpMethod.GET, null, null), "/");
-		HttpResponse response = responseFuture.get(5, TimeUnit.SECONDS);
-		Assert.assertNotNull(response);
-	}
-	
-	@Test
-	public void testPost() throws Exception {
-		final byte[] sentData = RandomStringUtils.randomAscii(32).getBytes(Charsets.US_ASCII);
-		
-		Janus<ServerStats, ServerInstance> janus = new Janus<ServerStats, ServerInstance>(
+                new ServerStatsFactory(ServerStats.class, new MetricRegistry()));
+        AsyncHttpClient client = new AsyncHttpClient(janus, 0);
+
+        ListenableFuture<HttpResponse> responseFuture = client.execute(new HttpRequest(HttpMethod.GET, null, null), "/");
+        HttpResponse response = responseFuture.get(5, TimeUnit.SECONDS);
+        Assert.assertNotNull(response);
+    }
+
+    @Test
+    public void testPost() throws Exception {
+        final byte[] sentData = RandomStringUtils.randomAscii(32).getBytes(Charsets.US_ASCII);
+
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST, "http://localhost:" + server.getURI().getPort()),
                 new RandomLoadBalancer(),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
-		AsyncHttpClient<ServerStats, ServerInstance> client = new AsyncHttpClient<ServerStats, ServerInstance>(janus, 0);
-		
-		ListenableFuture<HttpResponse> responseFuture = client.execute(new HttpRequest(HttpMethod.POST, null, new ByteArrayInputStream(sentData)), "/");
-		HttpResponse response = responseFuture.get(5, TimeUnit.SECONDS);
-		Assert.assertNotNull(response);
-		Assert.assertEquals(new String(sentData, Charsets.US_ASCII).trim(), new String(IOUtils.toByteArray(response.getBody()), Charsets.US_ASCII).trim());
-	}
+                new ServerStatsFactory(ServerStats.class, new MetricRegistry()));
+        AsyncHttpClient client = new AsyncHttpClient(janus, 0);
+
+        ListenableFuture<HttpResponse> responseFuture = client.execute(new HttpRequest(HttpMethod.POST, null, new ByteArrayInputStream(sentData)), "/");
+        HttpResponse response = responseFuture.get(5, TimeUnit.SECONDS);
+        Assert.assertNotNull(response);
+        Assert.assertEquals(new String(sentData, Charsets.US_ASCII).trim(), new String(IOUtils.toByteArray(response.getBody()), Charsets.US_ASCII).trim());
+    }
 }

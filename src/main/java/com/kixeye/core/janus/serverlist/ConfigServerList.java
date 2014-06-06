@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author cbarry@kixeye.com
  */
-public class ConfigServerList implements ServerList<ServerInstance> {
+public class ConfigServerList implements ServerList {
 
     final static Logger logger = LoggerFactory.getLogger(ConfigServerList.class);
 

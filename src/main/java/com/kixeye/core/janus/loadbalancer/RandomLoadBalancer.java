@@ -30,11 +30,11 @@ import java.util.List;
  *
  * @author cbarry@kixeye.com
  */
-public class RandomLoadBalancer implements LoadBalancer<ServerStats> {
+public class RandomLoadBalancer implements LoadBalancer {
 
     /**
-     * @param serverStats the collection of {@link ServerStats} to choose from
-     * @return the chosen {@link ServerStats}
+     * @param serverStats the collection of {@link com.kixeye.core.janus.ServerStats} to choose from
+     * @return the chosen {@link com.kixeye.core.janus.ServerStats}
      * @see {@link LoadBalancer#choose(java.util.Collection)}
      */
     @Override
@@ -62,4 +62,5 @@ public class RandomLoadBalancer implements LoadBalancer<ServerStats> {
         int index = RandomUtils.nextInt(0, availableServers.size());
         return availableServers.get(index);
     }
+
 }

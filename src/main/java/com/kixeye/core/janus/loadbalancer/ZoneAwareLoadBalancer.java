@@ -27,8 +27,8 @@ import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.kixeye.core.janus.ServerInstance;
 import com.kixeye.core.janus.ServerStats;
+import com.kixeye.core.janus.ServerInstance;
 import com.kixeye.core.janus.serverlist.EurekaServerInstance;
 import com.netflix.appinfo.AmazonInfo;
 import com.netflix.appinfo.DataCenterInfo;
@@ -68,7 +68,7 @@ import static com.codahale.metrics.MetricRegistry.name;
  *
  * @author cbarry@kixeye.com
  */
-public class ZoneAwareLoadBalancer implements LoadBalancer<ServerStats> {
+public class ZoneAwareLoadBalancer implements LoadBalancer {
     private static final Logger logger = LoggerFactory.getLogger(ZoneAwareLoadBalancer.class);
     private static final String DEFAULT = "default";
     private static final String UNKNOWN = "unknown";
@@ -133,8 +133,9 @@ public class ZoneAwareLoadBalancer implements LoadBalancer<ServerStats> {
 
         // find the best available server
         MetaData max = null;
-        for (ServerStats s : serverStats) {
-            ServerInstance instance = s.getServerInstance();
+        for (ServerStats stat : serverStats) {
+            ServerStats s = (ServerStats) stat;
+                    ServerInstance instance = s.getServerInstance();
             if (!instance.isAvailable()) {
                 continue;
             }

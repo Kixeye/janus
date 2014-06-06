@@ -20,9 +20,8 @@
 package com.kixeye.core.janus.client.rest;
 
 import com.google.common.base.Preconditions;
-import com.kixeye.core.janus.Janus;
-import com.kixeye.core.janus.ServerInstance;
 import com.kixeye.core.janus.ServerStats;
+import com.kixeye.core.janus.Janus;
 import com.kixeye.core.janus.client.exception.NoServerAvailableException;
 import com.kixeye.core.janus.client.exception.RetriesExceededException;
 import org.slf4j.Logger;
@@ -41,13 +40,13 @@ import java.util.Map;
  *
  * @author cbarry@kixeye.com
  */
-public class DefaultRestTemplateClient<X extends ServerStats, Y extends ServerInstance> implements RestTemplateClient {
+public class DefaultRestTemplateClient implements RestTemplateClient {
 
     private final static Logger logger = LoggerFactory.getLogger(DefaultRestTemplateClient.class);
 
     private final Object emptyResult = new Object();
 
-    private final Janus<X, Y> janus;
+    private final Janus janus;
     private final RestTemplate client;
     private final int numRetries;
 
@@ -56,7 +55,7 @@ public class DefaultRestTemplateClient<X extends ServerStats, Y extends ServerIn
      * @param janus the Janus instance
      * @param numRetries maximum number of retries
      */
-    public DefaultRestTemplateClient(Janus<X, Y> janus, int numRetries) {
+    public DefaultRestTemplateClient(Janus janus, int numRetries) {
         this(janus, numRetries, new HttpComponentsClientHttpRequestFactory());
     }
 
@@ -66,7 +65,7 @@ public class DefaultRestTemplateClient<X extends ServerStats, Y extends ServerIn
      * @param numRetries maximum number of retrie
      * @param httpRequestFactory a factory object for constructing {@link org.springframework.http.client.ClientHttpRequest}s
      */
-    public DefaultRestTemplateClient(Janus<X, Y> janus, int numRetries, ClientHttpRequestFactory httpRequestFactory) {
+    public DefaultRestTemplateClient(Janus janus, int numRetries, ClientHttpRequestFactory httpRequestFactory) {
         Preconditions.checkNotNull(janus, "'janus' is cannot be null.");
         Preconditions.checkArgument(numRetries >= 0, "'numRetries' must be >= 0");
         Preconditions.checkNotNull(httpRequestFactory, "'httpRequestFactory' is cannot be null.");

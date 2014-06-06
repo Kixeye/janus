@@ -21,9 +21,9 @@ package com.kixeye.core.janus.client.websocket;
 
 
 import com.google.common.base.Preconditions;
+import com.kixeye.core.janus.ServerStats;
 import com.kixeye.core.janus.Janus;
 import com.kixeye.core.janus.ServerInstance;
-import com.kixeye.core.janus.ServerStats;
 import com.kixeye.core.janus.client.exception.NoServerAvailableException;
 import com.kixeye.core.janus.client.exception.RetriesExceededException;
 import org.eclipse.jetty.websocket.api.Session;
@@ -43,11 +43,11 @@ import java.util.concurrent.TimeUnit;
  *
  * @author cbarry@kixeye.com
  */
-public class SessionWebSocketClient<X extends ServerStats, Y extends ServerInstance> {
+public class SessionWebSocketClient {
 
     private final Logger logger = LoggerFactory.getLogger(StatelessWebSocketClient.class);
 
-    private final Janus<X, Y> janus;
+    private final Janus janus;
     private final int numRetries;
     private final String relativeUrl;
     private final WebSocketClient webSocketClient;
@@ -58,7 +58,7 @@ public class SessionWebSocketClient<X extends ServerStats, Y extends ServerInsta
      * @param relativeUrl     the relative url (path) that the remote websocket endpoint is listening on
      * @param webSocketClient the underlying {@link WebSocketClient} which will be used to communicate with the remote endpoint
      */
-    public SessionWebSocketClient(Janus<X, Y> janus, int numRetries, String relativeUrl, WebSocketClient webSocketClient) {
+    public SessionWebSocketClient(Janus janus, int numRetries, String relativeUrl, WebSocketClient webSocketClient) {
         Preconditions.checkNotNull(janus, "'janus' cannot be null.");
         Preconditions.checkArgument(numRetries >= 0, "'numberRetries must be >= 0'");
         Preconditions.checkNotNull(webSocketClient, "'webSocketClient' cannot be null");
@@ -90,7 +90,7 @@ public class SessionWebSocketClient<X extends ServerStats, Y extends ServerInsta
         long retries = numRetries;
         do {
             // get a load balanced server
-            X server = janus.getServer();
+            ServerStats server = janus.getServer();
             if (server == null) {
                 throw new NoServerAvailableException(janus.getServiceName());
             }
@@ -108,7 +108,7 @@ public class SessionWebSocketClient<X extends ServerStats, Y extends ServerInsta
 
             // wrap session and return to caller
             if (session != null) {
-                return new JettyWebSocketSession<X>(server, session);
+                return new JettyWebSocketSession(server, session);
             }
 
             retries -= 1;
@@ -123,10 +123,10 @@ public class SessionWebSocketClient<X extends ServerStats, Y extends ServerInsta
      */
     private class ProxyWebSocketListener implements WebSocketListener {
 
-        final private X server;
+        final private ServerStats server;
         final private WebSocketListener listener;
 
-        public ProxyWebSocketListener(X server, WebSocketListener listener) {
+        public ProxyWebSocketListener(ServerStats server, WebSocketListener listener) {
             this.server = server;
             this.listener = listener;
         }

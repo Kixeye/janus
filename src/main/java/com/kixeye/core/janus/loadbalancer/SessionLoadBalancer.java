@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author cbarry@kixeye.com
  */
-public class SessionLoadBalancer implements LoadBalancer<ServerStats> {
+public class SessionLoadBalancer implements LoadBalancer {
     private final static Logger log = LoggerFactory.getLogger(SessionLoadBalancer.class);
     private final LoadingCache<String,LocalSessionCount> incrementalSessions ;
 
@@ -96,7 +96,7 @@ public class SessionLoadBalancer implements LoadBalancer<ServerStats> {
                 }
 
                 // add server to priority queue to sort by total session count
-                pq.add(new SessionServerTuple(stats, additionalSessions, log));
+                pq.add(new SessionServerTuple((ServerStats) stats, additionalSessions, log));
             }
             SessionServerTuple top = pq.peek();
             if (top == null) {

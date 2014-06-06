@@ -39,8 +39,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class provides the main entry point for retrieving the "best" server instance within a single service cluster.
- * It coordinates the discovery of available server instances (via {@link ServerList}) with a load balancing strategy {@link LoadBalancer}
- * to produce the best candidate server instance.
+ * It coordinates the discovery of available server instances (via {@link ServerList})
+ * to produce the best candidate server instance.with a load balancing strategy {@link LoadBalancer}
  * <p/>
  * {@link Janus} will cache internally the server instances returned by the {@link ServerList} for a period of time, and will only ask
  * the {@link ServerList} for server instances when the period has expired.  By default, the service instances will be cached for 30 seconds,
@@ -68,44 +68,57 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @see {@link com.kixeye.core.janus.client.websocket.StatelessWebSocketClient}
  * @see {@link com.kixeye.core.janus.client.websocket.StatelessMessageClient}
  */
-public class Janus<T extends ServerStats, U extends ServerInstance> {
+public class Janus {
 
     private static final Logger logger = LoggerFactory.getLogger(Janus.class);
     public static final String REFRESH_INTERVAL_IN_MILLIS = "janus.refreshIntervalInMillis";
-    public static final int DEFAULT_REFRESH_INTERVAL_IN_MILLIS = 30000;
+    public static final long DEFAULT_REFRESH_INTERVAL_IN_MILLIS = 30000;
 
     private final String serviceName;
-    private final MetricRegistry metricRegistry;
-    private final ServerList<U> serverList;
-    private final LoadBalancer<T> loadBalancer;
-    private final ServerStatsFactory<T> statsFactory;
+    private final ServerList serverList;
+    private final LoadBalancer loadBalancer;
+    private final StatsFactory statsFactory;
     private final DynamicLongProperty refreshInterval = DynamicPropertyFactory.getInstance().getLongProperty(REFRESH_INTERVAL_IN_MILLIS, DEFAULT_REFRESH_INTERVAL_IN_MILLIS);
 
     // cache of server lists
-    private final Map<String, T> servers = new ConcurrentHashMap<String, T>();
+    private final Map<String, ServerStats> servers = new ConcurrentHashMap<>();
     private final AtomicBoolean updatingServer = new AtomicBoolean(false);
     private long nextUpdateTime = -1;
 
     /**
-     * @param serviceName    the name of the service cluster
-     * @param metricRegistry metricRegistory used for server statistics tracking
-     * @param serverList     the {@link ServerList} implementation
-     * @param loadBalancer   the {@link LoadBalancer} implementation
-     * @param statsFactory   factory class for the creation of {@link ServerStats}
+     * @param serviceName  the name of the service cluster
+     * @param serverList   the {@link ServerList} implementation
+     * @param loadBalancer the {@link LoadBalancer} implementation
+     * @param statsFactory factory class for the creation of {@link ServerStats}
      */
-    public Janus(String serviceName, MetricRegistry metricRegistry, ServerList<U> serverList, LoadBalancer<T> loadBalancer, ServerStatsFactory<T> statsFactory) {
+    public Janus(String serviceName, ServerList serverList, LoadBalancer loadBalancer, StatsFactory statsFactory) {
         this.serviceName = serviceName;
-        this.metricRegistry = metricRegistry;
         this.serverList = serverList;
-        this.statsFactory = statsFactory;
         this.loadBalancer = loadBalancer;
+        this.statsFactory = statsFactory;
+        updateServerList();
+    }
+
+    /**
+     * @param serviceName  the name of the service cluster
+     * @param serverList   the {@link ServerList} implementation
+     * @param loadBalancer the {@link LoadBalancer} implementation
+     * @param statsFactory factory class for the creation of {@link ServerStats}
+     * @param refreshInterval the refresh interval (in millis) to refresh Janus's cache of servers.
+     */
+    public Janus(String serviceName, ServerList serverList, LoadBalancer loadBalancer, StatsFactory statsFactory, long refreshInterval) {
+        this.serviceName = serviceName;
+        this.serverList = serverList;
+        this.loadBalancer = loadBalancer;
+        this.statsFactory = statsFactory;
+        setRefreshInterval(refreshInterval);
         updateServerList();
     }
 
     /**
      * Sets the refresh interval of the internal server instance cache.
      *
-     * @param refreshInterval
+     * @param refreshInterval the refreshInterval to set
      */
     public void setRefreshInterval(long refreshInterval) {
         ConfigurationManager.getConfigInstance().setProperty(REFRESH_INTERVAL_IN_MILLIS, refreshInterval);
@@ -114,7 +127,7 @@ public class Janus<T extends ServerStats, U extends ServerInstance> {
     /**
      * Getter for refreshInteval
      *
-     * @return
+     * @return the current refreshInterval
      */
     public long getRefreshInterval() {
         return refreshInterval.get();
@@ -134,7 +147,7 @@ public class Janus<T extends ServerStats, U extends ServerInstance> {
      *
      * @return a server instance chosen through the load balancer.
      */
-    public T getServer() {
+    public ServerStats getServer() {
         updateServerList();
         //TODO filter out unavailable servers before sending to loadBalancer?
         return loadBalancer.choose(servers.values());
@@ -156,20 +169,20 @@ public class Janus<T extends ServerStats, U extends ServerInstance> {
             }
 
             // update server stats with current availability
-            for (U s : serverList.getListOfServers()) {
-                T stat = servers.get(s.getId());
+            for (ServerInstance s : serverList.getListOfServers()) {
+                ServerStats stat = servers.get(s.getId());
                 if (stat != null) {
                     stat.getServerInstance().setAvailable(s.isAvailable());
                 } else {
-                    stat = statsFactory.createServerStats(metricRegistry, s);
+                    stat = statsFactory.createServerStats(s);
                     servers.put(s.getId(), stat);
                 }
             }
 
             // tick all the servers and remove from list if requested
-            Iterator<Map.Entry<String, T>> iter = servers.entrySet().iterator();
+            Iterator<Map.Entry<String, ServerStats>> iter = servers.entrySet().iterator();
             while (iter.hasNext()) {
-                Map.Entry<String, T> entry = iter.next();
+                Map.Entry<String, ServerStats> entry = iter.next();
                 ServerInstance s = entry.getValue().getServerInstance();
                 if (!s.tick()) {
                     iter.remove();
@@ -182,62 +195,83 @@ public class Janus<T extends ServerStats, U extends ServerInstance> {
         }
     }
 
+    /**
+     * Create an instance of {@link Builder}
+     *
+     * @param serviceName the service cluster name that the {@link Janus} will use
+     * @return the builder
+     */
     public static Builder builder(String serviceName) {
         return new Builder(serviceName);
     }
 
-    public static class Builder<T extends ServerStats, U extends ServerInstance> {
+    public static class Builder {
+
         private String serviceName;
-        private MetricRegistry metricRegistry;
         private ServerList serverList;
         private LoadBalancer loadBalancer;
-        private ServerStatsFactory statsFactory;
-        private DynamicLongProperty refreshInterval = DynamicPropertyFactory.getInstance().getLongProperty(REFRESH_INTERVAL_IN_MILLIS, DEFAULT_REFRESH_INTERVAL_IN_MILLIS);
+        private StatsFactory statsFactory;
+        private MetricRegistry metricRegistry;
+        private Long refreshIntervalInMillis = Janus.DEFAULT_REFRESH_INTERVAL_IN_MILLIS;
 
-        private Builder(String serviceName){
+        public Builder(String serviceName){
             Preconditions.checkArgument(!Strings.isNullOrEmpty(serviceName), "'serviceName' cannot be null or empty.");
             this.serviceName = serviceName;
         }
 
-        public Builder withMetricRegistry(MetricRegistry metricRegistry) {
-            this.metricRegistry = metricRegistry;
+        public Builder withServers(String...urls){
+            this.serverList = new ConstServerList(serviceName, urls);
             return this;
         }
 
-        public Builder withServerList(ServerList serverList) {
+        public Builder withRandomLoadBalancing(){
+            this.loadBalancer = new RandomLoadBalancer();
+            return this;
+        }
+
+        public Builder withServerList(ServerList serverList){
             this.serverList = serverList;
             return this;
         }
 
-        public Builder withLoadBalancer(LoadBalancer loadBalancer) {
+        public Builder withLoadBalancer(LoadBalancer loadBalancer){
             this.loadBalancer = loadBalancer;
             return this;
         }
 
-        public Builder withStatsFactory(ServerStatsFactory statsFactory){
+        public Builder withStatsFactory(StatsFactory statsFactory){
             this.statsFactory = statsFactory;
             return this;
         }
 
-        public Janus<ServerStats, ServerInstance> build() {
-            if (metricRegistry == null) {
-                metricRegistry = new MetricRegistry();
-            }
-            if (serverList == null) {
-                serverList = new ConfigServerList(serviceName);
-            }
-            if (loadBalancer == null) {
-                loadBalancer = new RandomLoadBalancer();
-            }
-            if (statsFactory == null) {
-                statsFactory = new ServerStatsFactory(ServerStats.class);
-            }
-            return new Janus<ServerStats, ServerInstance>(serviceName, metricRegistry, serverList, loadBalancer, statsFactory);
+        public Builder withMetricRegistry(MetricRegistry metricRegistry){
+            this.metricRegistry = metricRegistry;
+            return this;
         }
 
-        public Builder forServers(String... servers) {
-            this.serverList = new ConstServerList(serviceName, servers);
+        public Builder withRefreshIntervalInMillis(long refreshIntervalInMillis){
+            this.refreshIntervalInMillis = refreshIntervalInMillis;
             return this;
+        }
+
+        public Janus build(){
+            setDefaults();
+            return new Janus(serviceName, serverList, loadBalancer, statsFactory, refreshIntervalInMillis);
+        }
+
+        private void setDefaults() {
+            if(serverList == null){
+                serverList = new ConfigServerList(serviceName);
+            }
+            if(loadBalancer == null){
+                loadBalancer = new RandomLoadBalancer();
+            }
+            if(metricRegistry == null){
+                metricRegistry = new MetricRegistry();
+            }
+            if(statsFactory == null){
+                statsFactory = new ServerStatsFactory(ServerStats.class, metricRegistry);
+            }
         }
     }
 }

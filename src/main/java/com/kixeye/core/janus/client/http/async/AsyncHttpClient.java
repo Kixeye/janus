@@ -24,7 +24,6 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.kixeye.core.janus.Janus;
-import com.kixeye.core.janus.ServerInstance;
 import com.kixeye.core.janus.ServerStats;
 import com.kixeye.core.janus.client.exception.NoServerAvailableException;
 import com.kixeye.core.janus.client.exception.RetriesExceededException;
@@ -56,10 +55,10 @@ import java.util.concurrent.Executors;
  * 
  * @author ebahtijaragic@kixeye.com
  */
-public class AsyncHttpClient<X extends ServerStats, Y extends ServerInstance> implements Closeable {
+public class AsyncHttpClient implements Closeable {
 	private static final Logger logger = LoggerFactory.getLogger(AsyncHttpClient.class);
 	
-	private final Janus<X, Y> janus;
+	private final Janus janus;
 	private final int numRetries;
 	private final CloseableHttpAsyncClient httpClient;
 	private final ExecutorService executor;
@@ -72,7 +71,7 @@ public class AsyncHttpClient<X extends ServerStats, Y extends ServerInstance> im
      *                   are considered errors (ie. IOExceptions) and are eligible for retry. Requests that receive a response (regardless of http status) are
      *                   considered successful and are not eligible for retry.
      */
-    public AsyncHttpClient(Janus<X, Y> janus, int numRetries) {
+    public AsyncHttpClient(Janus janus, int numRetries) {
         Preconditions.checkNotNull(janus, "'janus' is required but was null");
         Preconditions.checkArgument(numRetries >= 0, "'numRetries' must be >= 0");
 
@@ -108,12 +107,12 @@ public class AsyncHttpClient<X extends ServerStats, Y extends ServerInstance> im
 	 */
 	public ListenableFuture<HttpResponse> execute(HttpRequest request, String path, Object... urlVariables) throws IOException {
 		SettableFuture<HttpResponse> response = SettableFuture.create();
-		executor.submit(new ExecuteTask<X, Y>(response, request, path, urlVariables, janus, httpClient, executor, numRetries));
+		executor.submit(new ExecuteTask(response, request, path, urlVariables, janus, httpClient, executor, numRetries));
 		return response;
 	}
 	
-	private static class ExecuteTask<X extends ServerStats, Y extends ServerInstance> implements Runnable {
-		private final Janus<X, Y> janus;
+	private static class ExecuteTask implements Runnable {
+		private final Janus janus;
 		private final HttpAsyncClient httpClient;
 		private final ExecutorService executor;
 		private final SettableFuture<HttpResponse> response;
@@ -134,7 +133,7 @@ public class AsyncHttpClient<X extends ServerStats, Y extends ServerInstance> im
 		 * @param urlVariables path substitution variables
 		 */
 		public ExecuteTask(SettableFuture<HttpResponse> responseFuture, HttpRequest request, String path, Object[] urlVariables,
-				Janus<X, Y> janus, HttpAsyncClient httpClient, ExecutorService executor, int maxRetryCount) {
+				Janus janus, HttpAsyncClient httpClient, ExecutorService executor, int maxRetryCount) {
 			this.response = responseFuture;
 			this.request = request;
 			this.url = path;
@@ -224,7 +223,7 @@ public class AsyncHttpClient<X extends ServerStats, Y extends ServerInstance> im
 					public void completed(org.apache.http.HttpResponse result) {
                         long latency = System.currentTimeMillis() - startTime;
 
-						Map<String, Collection<String>> headers = new HashMap<String, Collection<String>>();
+						Map<String, Collection<String>> headers = new HashMap<>();
 						for (Header header : result.getAllHeaders()) {
 							Collection<String> headerValues = headers.get(header.getName());
 							if (headerValues == null) {

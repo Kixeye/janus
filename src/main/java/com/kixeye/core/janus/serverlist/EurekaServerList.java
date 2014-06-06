@@ -20,6 +20,7 @@
 package com.kixeye.core.janus.serverlist;
 
 import com.google.common.base.Preconditions;
+import com.kixeye.core.janus.ServerInstance;
 import com.netflix.appinfo.InstanceInfo;
 import com.netflix.discovery.DiscoveryClient;
 import com.netflix.discovery.DiscoveryManager;
@@ -40,7 +41,7 @@ import java.util.Map;
  *
  * @author cbarry@kixeye.com
  */
-public class EurekaServerList implements ServerList<EurekaServerInstance> {
+public class EurekaServerList implements ServerList {
 
     private String serviceName;
     private DiscoveryClient discoveryClient;
@@ -88,9 +89,9 @@ public class EurekaServerList implements ServerList<EurekaServerInstance> {
      * @return current server instances reported by Eureka
      */
     @Override
-    public List<EurekaServerInstance> getListOfServers() {
-        List<EurekaServerInstance> servers = new ArrayList<EurekaServerInstance>();
+    public List<ServerInstance> getListOfServers() {
         List<InstanceInfo> instances = discoveryClient.getInstancesByVipAddress(serviceName, false, null);
+        List<ServerInstance> servers = new ArrayList<ServerInstance>(instances.size());
         for (InstanceInfo ii : instances ) {
             String host;
             if (useInternalIp) {

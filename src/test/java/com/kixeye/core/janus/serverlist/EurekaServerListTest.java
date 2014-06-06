@@ -19,6 +19,7 @@
  */
 package com.kixeye.core.janus.serverlist;
 
+import com.kixeye.core.janus.ServerInstance;
 import com.netflix.appinfo.DataCenterInfo;
 import com.netflix.appinfo.InstanceInfo;
 import com.netflix.discovery.DiscoveryClient;
@@ -41,10 +42,10 @@ public class EurekaServerListTest {
         // get list of external service instances
         DiscoveryClient client = getMockedDiscoveryClient();
         EurekaServerList serverList = new EurekaServerList( client, VIP, false, false );
-        List<EurekaServerInstance> servers = serverList.getListOfServers();
+        List<ServerInstance> servers = serverList.getListOfServers();
 
         // assume we got at least one instance and check it has Eureka data
-        EurekaServerInstance server = servers.get(0);
+        EurekaServerInstance server = (EurekaServerInstance) servers.get(0);
         Assert.assertNotNull( server.getInstanceInfo() );
         Assert.assertEquals( server.getInstanceInfo().getVIPAddress(), VIP );
         Assert.assertEquals( VIP, serverList.getServiceName() );
@@ -55,10 +56,10 @@ public class EurekaServerListTest {
         // get list of external service instances
         DiscoveryClient client = getMockedDiscoveryClient();
         EurekaServerList serverList = new EurekaServerList( client, VIP, false, true );
-        List<EurekaServerInstance> servers = serverList.getListOfServers();
+        List<ServerInstance> servers = serverList.getListOfServers();
 
         // assume we got at least one instance and check it has Eureka data
-        EurekaServerInstance server = servers.get(0);
+        EurekaServerInstance server = (EurekaServerInstance) servers.get(0);
         Assert.assertNotNull( server.getInstanceInfo() );
         Assert.assertEquals( server.getInstanceInfo().getVIPAddress(), VIP );
         Assert.assertEquals( VIP, serverList.getServiceName() );

@@ -21,9 +21,9 @@ package com.kixeye.core.janus.client.websocket;
 
 
 import com.google.common.base.Preconditions;
+import com.kixeye.core.janus.ServerStats;
 import com.kixeye.core.janus.Janus;
 import com.kixeye.core.janus.ServerInstance;
-import com.kixeye.core.janus.ServerStats;
 import com.kixeye.core.janus.client.exception.NoServerAvailableException;
 import com.kixeye.core.janus.client.exception.RetriesExceededException;
 import org.eclipse.jetty.websocket.api.Session;
@@ -52,15 +52,15 @@ import java.util.concurrent.TimeUnit;
  *
  * @author cbarry@kixeye.com
  */
-public class StatelessWebSocketClient<X extends ServerStats, Y extends ServerInstance> implements Closeable {
+public class StatelessWebSocketClient implements Closeable {
 
     private final Logger logger = LoggerFactory.getLogger(StatelessWebSocketClient.class);
 
-    private final Janus<X,Y> janus;
+    private final Janus janus;
     private final int numRetries;
     private final String relativeUrl;
     private final WebSocketListener listener;
-    private final Map<X,Session> sessions = new ConcurrentHashMap<X,Session>();
+    private final Map<ServerStats,Session> sessions = new ConcurrentHashMap<>();
     private final Map<Session,Object> sessionLocks = new ConcurrentHashMap<Session,Object>();
     private final WebSocketClient webSocketClient;
 
@@ -72,7 +72,7 @@ public class StatelessWebSocketClient<X extends ServerStats, Y extends ServerIns
      * @param webSocketClient the underlying {@link WebSocketClient} which will be used to communicate with the remote endpoint
      * @param listener a listener for responding message events
      */
-    public StatelessWebSocketClient(Janus<X, Y> janus, int numRetries, String relativeUrl, WebSocketClient webSocketClient, WebSocketListener listener) {
+    public StatelessWebSocketClient(Janus janus, int numRetries, String relativeUrl, WebSocketClient webSocketClient, WebSocketListener listener) {
         Preconditions.checkNotNull(janus, "'janus' cannot be null.");
         Preconditions.checkArgument(numRetries >= 0, "'numberRetries must be >= 0'");
         Preconditions.checkNotNull(webSocketClient, "'webSocketClient' cannot be null");
@@ -101,9 +101,9 @@ public class StatelessWebSocketClient<X extends ServerStats, Y extends ServerIns
     public void sendBytes(final ByteBuffer data) throws NoServerAvailableException, RetriesExceededException {
         Preconditions.checkNotNull(data, "'data' cannot be null");
 
-        SendWrapper<X> wrapped = new SendWrapper<X>() {
+        SendWrapper<ServerStats> wrapped = new SendWrapper<ServerStats>() {
             @Override
-            public void execute(final Session session, X server) throws IOException {
+            public void execute(final Session session, ServerStats server) throws IOException {
                 synchronized (sessionLocks.get(session)) {
                     session.getRemote().sendBytes(data);
                 }
@@ -125,9 +125,9 @@ public class StatelessWebSocketClient<X extends ServerStats, Y extends ServerIns
         Preconditions.checkNotNull(data, "'data' cannot be null");
 
         final ProxyWriteCallback proxy = new ProxyWriteCallback(callback);
-        SendWrapper<X> wrapped = new SendWrapper<X>() {
+        SendWrapper<ServerStats> wrapped = new SendWrapper<ServerStats>() {
             @Override
-            public void execute(Session session, X server) throws IOException {
+            public void execute(Session session, ServerStats server) throws IOException {
                 proxy.setServer(server);
                 session.getRemote().sendBytes(data, proxy);
             }
@@ -146,9 +146,9 @@ public class StatelessWebSocketClient<X extends ServerStats, Y extends ServerIns
     public void sendString(final String text) throws NoServerAvailableException, RetriesExceededException {
         Preconditions.checkNotNull(text, "'text' cannot be null");
 
-        SendWrapper<X> wrapped = new SendWrapper<X>() {
+        SendWrapper<ServerStats> wrapped = new SendWrapper<ServerStats>() {
             @Override
-            public void execute(Session session, X server) throws IOException {
+            public void execute(Session session, ServerStats server) throws IOException {
                 session.getRemote().sendString(text);
             }
         };
@@ -168,9 +168,9 @@ public class StatelessWebSocketClient<X extends ServerStats, Y extends ServerIns
         Preconditions.checkNotNull(text, "'text' cannot be null");
 
         final ProxyWriteCallback proxy = new ProxyWriteCallback(callback);
-        SendWrapper<X> wrapped = new SendWrapper<X>() {
+        SendWrapper<ServerStats> wrapped = new SendWrapper<ServerStats>() {
             @Override
-            public void execute(Session session, X server) throws IOException {
+            public void execute(Session session, ServerStats server) throws IOException {
                 proxy.setServer(server);
                 session.getRemote().sendString(text, proxy);
             }
@@ -191,11 +191,11 @@ public class StatelessWebSocketClient<X extends ServerStats, Y extends ServerIns
     	}
     }
 
-    private void sendWithLoadBalancer(SendWrapper<X> function) throws NoServerAvailableException, RetriesExceededException {
+    private void sendWithLoadBalancer(SendWrapper<ServerStats> function) throws NoServerAvailableException, RetriesExceededException {
         long retries = numRetries;
         do {
             // get a load balanced server
-            X server = janus.getServer();
+            ServerStats server = janus.getServer();
             if (server == null) {
                 throw new NoServerAvailableException( janus.getServiceName() );
             }
@@ -258,9 +258,9 @@ public class StatelessWebSocketClient<X extends ServerStats, Y extends ServerIns
      */
     private class ProxyWebSocketListener implements WebSocketListener {
 
-        final private X server;
+        final private ServerStats server;
 
-        public ProxyWebSocketListener(X server) {
+        public ProxyWebSocketListener(ServerStats server) {
             this.server = server;
         }
 
@@ -299,13 +299,13 @@ public class StatelessWebSocketClient<X extends ServerStats, Y extends ServerIns
     private class ProxyWriteCallback implements WriteCallback {
 
         final private WriteCallback callback;
-        private X server;
+        private ServerStats server;
 
         private ProxyWriteCallback(WriteCallback callback) {
             this.callback = callback;
         }
 
-        public void setServer(X server) {
+        public void setServer(ServerStats server) {
             this.server = server;
         }
 

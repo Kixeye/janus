@@ -20,7 +20,7 @@
 package com.kixeye.core.janus;
 
 import com.codahale.metrics.MetricRegistry;
-import com.kixeye.core.janus.Janus.Builder;
+//import com.kixeye.core.janus.Janus.Builder;
 import com.kixeye.core.janus.loadbalancer.RandomLoadBalancer;
 import com.kixeye.core.janus.serverlist.ConstServerList;
 import com.netflix.config.ConfigurationManager;
@@ -41,12 +41,11 @@ public class JanusTest {
 
     @Test
     public void GetServerTest() {
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST,"http://localhost:0001","http://localhost:002","http://localhost:003"),
                 new RandomLoadBalancer(),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
+                new ServerStatsFactory(ServerStats.class,new MetricRegistry()));
 
         // should randomly a server from the list
         ServerStats firstResult = janus.getServer();
@@ -63,12 +62,11 @@ public class JanusTest {
 
     @Test
     public void RefreshIntervalTest() {
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST,"http://localhost:0001","http://localhost:002","http://localhost:003"),
                 new RandomLoadBalancer(),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
+                new ServerStatsFactory(ServerStats.class,new MetricRegistry()) );
 
         Assert.assertEquals(DEFAULT_REFRESH_INTERVAL_IN_MILLIS, janus.getRefreshInterval());
 
@@ -79,12 +77,11 @@ public class JanusTest {
 
     @Test
     public void ShortCircuitTest() throws InterruptedException {
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST,"http://localhost:8080"),
                 new RandomLoadBalancer(),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
+                new ServerStatsFactory(ServerStats.class,new MetricRegistry()) );
 
         ServerStats stats = janus.getServer();
         Assert.assertEquals( stats.getServerInstance().isShortCircuited(), false );
@@ -130,34 +127,51 @@ public class JanusTest {
 
     @Test
     public void noServersTest() {
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST),
                 new RandomLoadBalancer(),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
+                new ServerStatsFactory(ServerStats.class,new MetricRegistry()) );
         Assert.assertNull(janus.getServer());
     }
 
     @Test
     public void defaultBuilder() {
-        Janus<ServerStats,ServerInstance> janus = Janus.builder(VIP_TEST).build();
+        Janus janus = Janus.builder(VIP_TEST).build();
         Assert.assertNull(janus.getServer());
     }
 
     @Test
-    public void defaultBuilder_withConstServerList() {
-        Builder builder = Janus.builder(VIP_TEST);
-        builder.withServerList(new ConstServerList(VIP_TEST, "http://localhost:0001"));
-        Janus<ServerStats, ServerInstance> janus = builder.build();
+    public void builderWithServers(){
+        Janus janus = Janus.builder(VIP_TEST).withServers("http://localhost:8080").build();
         Assert.assertEquals("localhost", janus.getServer().getServerInstance().getHost());
     }
 
     @Test
-    public void defaultBuilder_forServers() {
-        Builder builder = Janus.builder(VIP_TEST);
-        builder.forServers("http://localhost:0001");
-        Janus<ServerStats, ServerInstance> janus = builder.build();
+    public void builderWithConstServerList(){
+        Janus janus = Janus.builder(VIP_TEST).withServerList(new ConstServerList(VIP_TEST, "http://localhost:8080")).build();
         Assert.assertEquals("localhost", janus.getServer().getServerInstance().getHost());
     }
+
+    @Test
+    public void builderWithRefreshInterval(){
+        Janus janus = Janus.builder(VIP_TEST).withRefreshIntervalInMillis(100).build();
+        Assert.assertEquals(100, janus.getRefreshInterval());
+    }
+//
+//    @Test
+//    public void defaultBuilder_withConstServerList() {
+//        Builder builder = Janus.builder(VIP_TEST);
+//        builder.withServerList(new ConstServerList(VIP_TEST, "http://localhost:0001"));
+//        Janus<ServerStats, ServerInstance> janus = builder.build();
+//        Assert.assertEquals("localhost", janus.getServer().getServerInstance().getHost());
+//    }
+//
+//    @Test
+//    public void defaultBuilder_forServers() {
+//        Builder builder = Janus.builder(VIP_TEST);
+//        builder.withServers("http://localhost:0001");
+//        Janus<ServerStats, ServerInstance> janus = builder.build();
+//        Assert.assertEquals("localhost", janus.getServer().getServerInstance().getHost());
+//    }
 }

@@ -27,8 +27,8 @@ import org.junit.Test;
 public class BaseServerStatsFactoryTest {
     @Test
     public void normalConstructionTest() {
-        BaseServerStatsFactory factory = new BaseServerStatsFactory(BaseServerStats.class, new MetricRegistry());
-        BaseServerStats stats = factory.createServerStats(new ServerInstance("test","http://localhost"));
+        ServerStatsFactory factory = new ServerStatsFactory(ServerStats.class, new MetricRegistry());
+        ServerStats stats = factory.createServerStats(new ServerInstance("test","http://localhost"));
         Assert.assertNotNull(stats);
 
         Assert.assertEquals(0, stats.getOpenRequestCount());
@@ -39,12 +39,12 @@ public class BaseServerStatsFactoryTest {
 
     @Test
     public void forceExceptionTest() {
-        BaseServerStatsFactory factory = new BaseServerStatsFactory(BadServerStats.class,new MetricRegistry());
-        BaseServerStats stats = factory.createServerStats(new ServerInstance("test","http://localhost"));
+        ServerStatsFactory factory = new ServerStatsFactory(BadServerStats.class,new MetricRegistry());
+        ServerStats stats = factory.createServerStats(new ServerInstance("test","http://localhost"));
         Assert.assertNull(stats);
     }
 
-    public static class BadServerStats extends BaseServerStats {
+    public static class BadServerStats extends ServerStats {
         private BadServerStats() {
         }
     }

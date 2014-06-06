@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Handles creation of a {@link BaseServerStats} for a given {@link ServerInstance}.
+ * Handles creation of a {@link ServerStats} for a given {@link ServerInstance}.
  *
  * @author cbarry@kixeye.com
  */
@@ -34,18 +34,18 @@ public class ServerStatsFactory implements StatsFactory{
     private final Logger logger = LoggerFactory.getLogger(ServerStatsFactory.class);
 
     private MetricRegistry metricRegistry;
-    private Class<? extends BaseServerStats> typeArgumentClass;
+    private Class<? extends ServerStats> typeArgumentClass;
 
-    public ServerStatsFactory(Class<? extends BaseServerStats> typeArgumentClass, MetricRegistry metricRegistry) {
+    public ServerStatsFactory(Class<? extends ServerStats> typeArgumentClass, MetricRegistry metricRegistry) {
         this.typeArgumentClass = typeArgumentClass;
         this.metricRegistry = metricRegistry;
     }
 
-    public BaseServerStats createServerStats(ServerInstance serverInstance) {
+    public ServerStats createServerStats(ServerInstance serverInstance) {
         Preconditions.checkNotNull(metricRegistry, "'metricRegistry' cannot be null.");
         Preconditions.checkNotNull(serverInstance, "'serverInstance' cannot be null.");
         try {
-            BaseServerStats stat = typeArgumentClass.newInstance();
+            ServerStats stat = typeArgumentClass.newInstance();
             stat.setServerInstance(serverInstance);
             stat.setMetricRegistry(metricRegistry);
             return stat;

@@ -31,7 +31,7 @@ import java.util.List;
  *
  * @author cbarry
  */
-public class ConstServerList implements ServerList<ServerInstance> {
+public class ConstServerList implements ServerList {
 
     private final String serviceName;
     private final List<ServerInstance> list;
@@ -40,7 +40,7 @@ public class ConstServerList implements ServerList<ServerInstance> {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(serviceName), "'serviceName' cannot be null or empty.");
 
         this.serviceName = serviceName;
-        list = new ArrayList<ServerInstance>();
+        list = new ArrayList<>();
         for (String s : servers) {
             if (s == null) {
                 continue;

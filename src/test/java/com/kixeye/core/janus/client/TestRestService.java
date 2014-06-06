@@ -319,7 +319,7 @@ public class TestRestService extends DelegatingWebMvcConfiguration {
 
 
     static public AnnotationConfigWebApplicationContext createContext(int httpPort, int sockPort) {
-        Map<String, Object> properties = new HashMap<String, Object>();
+        Map<String, Object> properties = new HashMap<>();
         properties.put("http.enabled", "true");
         properties.put("http.port", "" + httpPort);
         properties.put("http.hostname", "localhost");
@@ -339,7 +339,7 @@ public class TestRestService extends DelegatingWebMvcConfiguration {
 
 
     static public AnnotationConfigWebApplicationContext createSecureContext(int httpPort, int sockPort, int secureSockPort) {
-        Map<String, Object> properties = new HashMap<String, Object>();
+        Map<String, Object> properties = new HashMap<>();
         properties.put("http.enabled", "true");
         properties.put("http.port", "" + httpPort);
         properties.put("http.hostname", "localhost");

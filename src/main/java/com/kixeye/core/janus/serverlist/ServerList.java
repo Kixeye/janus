@@ -28,7 +28,7 @@ import com.kixeye.core.janus.ServerInstance;
  *
  * @author cbarry@kixeye.com
  */
-public interface ServerList<T extends ServerInstance> {
+public interface ServerList {
     /**
      * Gets the service cluster name
      * @return service cluster name
@@ -37,7 +37,7 @@ public interface ServerList<T extends ServerInstance> {
 
     /**
      * Gets a list of server instances within a service cluster.
-     * @return
+     * @return the found list of {@link ServerInstance}s
      */
-    List<T> getListOfServers();
+    List<ServerInstance> getListOfServers();
 }

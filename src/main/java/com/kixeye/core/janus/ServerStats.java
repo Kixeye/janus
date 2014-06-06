@@ -36,7 +36,7 @@ import com.netflix.config.DynamicPropertyFactory;
  *
  *  @author cbarry@kixeye.com
  */
-public class ServerStats implements ServerStats {
+public class ServerStats {
     protected final DynamicLongProperty propErrorThreshold = DynamicPropertyFactory.getInstance().getLongProperty("janus.errorThresholdPerSec", 5);
 
     protected MetricRegistry metrics;
@@ -91,7 +91,6 @@ public class ServerStats implements ServerStats {
      * setter for serverInstance
      * @param serverInstance the serverInstance
      */
-    @Override
     public void setServerInstance(ServerInstance serverInstance) {
         this.server = serverInstance;
     }
@@ -100,7 +99,6 @@ public class ServerStats implements ServerStats {
      * getter for serverInstance
      * @return serverInstance
      */
-    @Override
     public ServerInstance getServerInstance() {
         return server;
     }

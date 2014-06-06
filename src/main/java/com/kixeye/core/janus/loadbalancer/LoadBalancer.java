@@ -26,11 +26,11 @@ import com.kixeye.core.janus.ServerStats;
 /**
  * Strategy interface for the selection of server instances to connect to
  * or send messages to.  Implementations should use the given collection of
- * {@link ServerStats} to determine the appropriate server to return.
+ * {@link com.kixeye.core.janus.ServerStats} to determine the appropriate server to return.
  *
  * @author cbarry@kixeye.com
  */
-public interface LoadBalancer<T extends ServerStats> {
+public interface LoadBalancer {
 
     /***
      * Choose an available server from the list of servers.  The list may
@@ -40,5 +40,5 @@ public interface LoadBalancer<T extends ServerStats> {
      *
      * @return server if available, null otherwise
      */
-    T choose(Collection<T> serverStats);
+   ServerStats choose(Collection<ServerStats> serverStats);
 }

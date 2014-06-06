@@ -54,13 +54,12 @@ public class RestTemplateTest {
         int port1 = SocketUtils.findAvailableTcpPort();
         AnnotationConfigWebApplicationContext context = TestRestService.createContext(port0, port1);
         MetricRegistry metricRegistry = new MetricRegistry();
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                metricRegistry,
                 new ConstServerList(VIP_TEST,"http://localhost:" + port0),
                 new ZoneAwareLoadBalancer(VIP_TEST,"default",metricRegistry),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
-        DefaultRestTemplateClient<ServerStats,ServerInstance> client = new DefaultRestTemplateClient<ServerStats,ServerInstance>(janus,0);
+                new ServerStatsFactory(ServerStats.class, metricRegistry));
+        DefaultRestTemplateClient client = new DefaultRestTemplateClient(janus,0);
 
         // test assessor
         Assert.assertNotNull( client.getRestTemplate() );
@@ -79,13 +78,12 @@ public class RestTemplateTest {
         int port1 = SocketUtils.findAvailableTcpPort();
         AnnotationConfigWebApplicationContext context = TestRestService.createContext(port0,port1);
         MetricRegistry metricRegistry = new MetricRegistry();
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                metricRegistry,
                 new ConstServerList(VIP_TEST,"http://localhost:" + port0),
                 new ZoneAwareLoadBalancer(VIP_TEST,"default",metricRegistry),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
-        DefaultRestTemplateClient<ServerStats,ServerInstance> client = new DefaultRestTemplateClient<ServerStats,ServerInstance>(janus,0);
+                new ServerStatsFactory(ServerStats.class, metricRegistry) );
+        DefaultRestTemplateClient client = new DefaultRestTemplateClient(janus,0);
 
         String result = client.getForObject("/test_params/{test}", String.class, "goofy");
         Assert.assertEquals("goofy", result);
@@ -99,16 +97,15 @@ public class RestTemplateTest {
         int port1 = SocketUtils.findAvailableTcpPort();
         AnnotationConfigWebApplicationContext context = TestRestService.createContext(port0,port1);
 
-        Map<String,String> params = new HashMap<String,String>();
+        Map<String,String> params = new HashMap();
         params.put("test","goofy");
 
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST,"http://localhost:" + port0),
                 new ZoneAwareLoadBalancer(VIP_TEST,"default",null),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
-        DefaultRestTemplateClient<ServerStats,ServerInstance> client = new DefaultRestTemplateClient<ServerStats,ServerInstance>(janus,0);
+                new ServerStatsFactory(ServerStats.class, new MetricRegistry()) );
+        DefaultRestTemplateClient client = new DefaultRestTemplateClient(janus,0);
 
         String result = client.getForObject("/test_params/{test}", String.class, params);
         Assert.assertEquals("goofy", result);
@@ -122,13 +119,12 @@ public class RestTemplateTest {
         int port0 = SocketUtils.findAvailableTcpPort();
         int port1 = SocketUtils.findAvailableTcpPort();
         AnnotationConfigWebApplicationContext context = TestRestService.createContext(port0,port1);
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST,"http://localhost:" + port0),
                 new RandomLoadBalancer(),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
-        DefaultRestTemplateClient<ServerStats,ServerInstance> client = new DefaultRestTemplateClient<ServerStats,ServerInstance>(janus,0);
+                new ServerStatsFactory(ServerStats.class, new MetricRegistry()) );
+        DefaultRestTemplateClient client = new DefaultRestTemplateClient(janus,0);
 
         String result = client.postForObject("/test_no_params", "post body", String.class);
         Assert.assertNotNull(result);
@@ -142,13 +138,12 @@ public class RestTemplateTest {
         int port0 = SocketUtils.findAvailableTcpPort();
         int port1 = SocketUtils.findAvailableTcpPort();
         AnnotationConfigWebApplicationContext context = TestRestService.createContext(port0,port1);
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST,"http://localhost:" + port0),
                 new RandomLoadBalancer(),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
-        DefaultRestTemplateClient<ServerStats,ServerInstance> client = new DefaultRestTemplateClient<ServerStats,ServerInstance>(janus,0);
+                new ServerStatsFactory(ServerStats.class,new MetricRegistry()) );
+        DefaultRestTemplateClient client = new DefaultRestTemplateClient(janus,0);
 
         String result = client.postForObject("/test_params/{test}", "body", String.class, "goofy");
         Assert.assertEquals("goofybody", result);
@@ -162,16 +157,15 @@ public class RestTemplateTest {
         int port1 = SocketUtils.findAvailableTcpPort();
         AnnotationConfigWebApplicationContext context = TestRestService.createContext(port0,port1);
 
-        Map<String,String> params = new HashMap<String,String>();
+        Map<String,String> params = new HashMap();
         params.put("test","goofy");
 
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST,"http://localhost:" + port0),
                 new RandomLoadBalancer(),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
-        DefaultRestTemplateClient<ServerStats,ServerInstance> client = new DefaultRestTemplateClient<ServerStats,ServerInstance>(janus,0);
+                new ServerStatsFactory(ServerStats.class, new MetricRegistry()) );
+        DefaultRestTemplateClient client = new DefaultRestTemplateClient(janus,0);
 
         String result = client.postForObject("/test_params/{test}", "body2", String.class, params);
         Assert.assertEquals("goofybody2", result);
@@ -181,25 +175,23 @@ public class RestTemplateTest {
 
     @Test(expected = Exception.class)
     public void retryFailTest() throws Exception {
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST,"https://bogus_server/"),
                 new RandomLoadBalancer(),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
-        DefaultRestTemplateClient<ServerStats,ServerInstance> client = new DefaultRestTemplateClient<ServerStats,ServerInstance>(janus,0);
+                new ServerStatsFactory(ServerStats.class, new MetricRegistry()) );
+        DefaultRestTemplateClient client = new DefaultRestTemplateClient(janus,0);
         client.getForObject("/", String.class);
     }
 
     @Test(expected = Exception.class)
          public void noServersTestRandomLB() throws Exception {
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST),
                 new RandomLoadBalancer(),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
-        DefaultRestTemplateClient<ServerStats,ServerInstance> client = new DefaultRestTemplateClient<ServerStats,ServerInstance>(janus,0);
+                new ServerStatsFactory(ServerStats.class, new MetricRegistry()) );
+        DefaultRestTemplateClient client = new DefaultRestTemplateClient(janus,0);
 
         String result = client.getForObject("/", String.class);
         Assert.assertNotNull(result);
@@ -207,13 +199,12 @@ public class RestTemplateTest {
 
     @Test(expected = Exception.class)
     public void noServersTestZoneLB() throws Exception {
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST),
                 new ZoneAwareLoadBalancer(VIP_TEST,"default",null),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
-        DefaultRestTemplateClient<ServerStats,ServerInstance> client = new DefaultRestTemplateClient<ServerStats,ServerInstance>(janus,0);
+                new ServerStatsFactory(ServerStats.class, new MetricRegistry()) );
+        DefaultRestTemplateClient client = new DefaultRestTemplateClient(janus,0);
 
         String result = client.getForObject("/", String.class);
         Assert.assertNotNull(result);
@@ -224,13 +215,12 @@ public class RestTemplateTest {
         int port0 = SocketUtils.findAvailableTcpPort();
         int port1 = SocketUtils.findAvailableTcpPort();
         AnnotationConfigWebApplicationContext context = TestRestService.createContext(port0,port1);
-        Janus<ServerStats,ServerInstance> janus = new Janus<ServerStats,ServerInstance>(
+        Janus janus = new Janus(
                 VIP_TEST,
-                new MetricRegistry(),
                 new ConstServerList(VIP_TEST,"http://localhost:" + port0),
                 new RandomLoadBalancer(),
-                new ServerStatsFactory<ServerStats>(ServerStats.class) );
-        DefaultRestTemplateClient<ServerStats,ServerInstance> client = new DefaultRestTemplateClient<ServerStats,ServerInstance>(janus,0);
+                new ServerStatsFactory(ServerStats.class, new MetricRegistry()) );
+        DefaultRestTemplateClient client = new DefaultRestTemplateClient(janus,0);
 
         try {
             client.getForObject("/not_a_real_path", String.class);

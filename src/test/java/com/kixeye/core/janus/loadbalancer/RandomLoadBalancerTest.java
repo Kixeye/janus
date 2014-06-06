@@ -20,8 +20,8 @@
 package com.kixeye.core.janus.loadbalancer;
 
 import com.google.common.collect.Lists;
-import com.kixeye.core.janus.ServerInstance;
 import com.kixeye.core.janus.ServerStats;
+import com.kixeye.core.janus.ServerInstance;
 import org.junit.Assert;
 import org.junit.Test;
 
