@@ -21,12 +21,17 @@ package com.kixeye.core.janus;
 
 import com.codahale.metrics.MetricRegistry;
 //import com.kixeye.core.janus.Janus.Builder;
+import com.kixeye.core.janus.Janus.Builder;
+import com.kixeye.core.janus.loadbalancer.LoadBalancer;
 import com.kixeye.core.janus.loadbalancer.RandomLoadBalancer;
+import com.kixeye.core.janus.loadbalancer.ZoneAwareLoadBalancer;
 import com.kixeye.core.janus.serverlist.ConstServerList;
 import com.netflix.config.ConfigurationManager;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.util.ReflectionUtils;
+import java.lang.reflect.Field;
 
 public class JanusTest {
     private final String VIP_TEST = "kvpservice";
@@ -158,20 +163,55 @@ public class JanusTest {
         Janus janus = Janus.builder(VIP_TEST).withRefreshIntervalInMillis(100).build();
         Assert.assertEquals(100, janus.getRefreshInterval());
     }
-//
-//    @Test
-//    public void defaultBuilder_withConstServerList() {
-//        Builder builder = Janus.builder(VIP_TEST);
-//        builder.withServerList(new ConstServerList(VIP_TEST, "http://localhost:0001"));
-//        Janus<ServerStats, ServerInstance> janus = builder.build();
-//        Assert.assertEquals("localhost", janus.getServer().getServerInstance().getHost());
-//    }
-//
-//    @Test
-//    public void defaultBuilder_forServers() {
-//        Builder builder = Janus.builder(VIP_TEST);
-//        builder.withServers("http://localhost:0001");
-//        Janus<ServerStats, ServerInstance> janus = builder.build();
-//        Assert.assertEquals("localhost", janus.getServer().getServerInstance().getHost());
-//    }
+
+    @Test
+    public void builder_withConstServerList() {
+        Builder builder = Janus.builder(VIP_TEST);
+        builder.withServerList(new ConstServerList(VIP_TEST, "http://localhost:0001"));
+        Janus janus = builder.build();
+        Assert.assertEquals("localhost", janus.getServer().getServerInstance().getHost());
+    }
+
+    @Test
+    public void builder_withServers() {
+        Builder builder = Janus.builder(VIP_TEST);
+        builder.withServers("http://localhost:0001");
+        Janus janus = builder.build();
+        Assert.assertEquals("localhost", janus.getServer().getServerInstance().getHost());
+    }
+
+    @Test
+    public void builder_withRandomLoadBalancing() {
+        Builder builder = Janus.builder(VIP_TEST);
+        builder.withRandomLoadBalancing();
+        Janus janus = builder.build();
+        Assert.assertNull("localhost", janus.getServer());
+        assertFieldType(janus, LoadBalancer.class, RandomLoadBalancer.class);
+    }
+
+    @Test
+    public void builder_withZoneAwardLoadBalancing() {
+        Builder builder = Janus.builder(VIP_TEST);
+        builder.withZoneAwareLoadBalancing("default");
+        Janus janus = builder.build();
+        Assert.assertNull("localhost", janus.getServer());
+        assertFieldType(janus, LoadBalancer.class, ZoneAwareLoadBalancer.class);
+    }
+
+    @Test
+    public void builder_withZoneAwardLoadBalancing_changeMetricRegistry() {
+        Builder builder = Janus.builder(VIP_TEST);
+        builder.withZoneAwareLoadBalancing("default");
+        builder.withMetricRegistry(new MetricRegistry());
+        Janus janus = builder.build();
+        Assert.assertNull("localhost", janus.getServer());
+        assertFieldType(janus, LoadBalancer.class, ZoneAwareLoadBalancer.class);
+    }
+
+    //used to assert that a field is of the expected type
+    private void assertFieldType(Janus janus, Class interfaceClass, Class expectedClass){
+        Field field = ReflectionUtils.findField(Janus.class, null, interfaceClass);
+        field.setAccessible(true);
+        Assert.assertEquals(expectedClass, ReflectionUtils.getField(field, janus).getClass());
+    }
 }

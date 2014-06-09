@@ -185,6 +185,10 @@ public class ZoneAwareLoadBalancer implements LoadBalancer {
         }
     }
 
+    public String getZone() {
+        return myLocation.getAvailabilityZone();
+    }
+
 
     /**
      * Holds load balancing meta data for a server instance.

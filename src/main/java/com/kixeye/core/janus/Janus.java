@@ -24,12 +24,18 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.kixeye.core.janus.loadbalancer.LoadBalancer;
 import com.kixeye.core.janus.loadbalancer.RandomLoadBalancer;
+import com.kixeye.core.janus.loadbalancer.SessionLoadBalancer;
+import com.kixeye.core.janus.loadbalancer.ZoneAwareLoadBalancer;
 import com.kixeye.core.janus.serverlist.ConfigServerList;
 import com.kixeye.core.janus.serverlist.ConstServerList;
+import com.kixeye.core.janus.serverlist.EurekaServerList;
 import com.kixeye.core.janus.serverlist.ServerList;
+import com.netflix.appinfo.MyDataCenterInstanceConfig;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicLongProperty;
 import com.netflix.config.DynamicPropertyFactory;
+import com.netflix.discovery.DefaultEurekaClientConfig;
+import com.netflix.discovery.DiscoveryManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Iterator;
@@ -205,13 +211,19 @@ public class Janus {
         return new Builder(serviceName);
     }
 
+    /**
+     * builder for create {@link Janus} instances.  Provides
+     * defaults for components needed by {@link Janus} that can
+     * be overridden.  Also provides convenience methods for configuring
+     * @{link Janus}.
+     */
     public static class Builder {
 
         private String serviceName;
         private ServerList serverList;
         private LoadBalancer loadBalancer;
         private StatsFactory statsFactory;
-        private MetricRegistry metricRegistry;
+        private MetricRegistry metricRegistry = new MetricRegistry();
         private Long refreshIntervalInMillis = Janus.DEFAULT_REFRESH_INTERVAL_IN_MILLIS;
 
         public Builder(String serviceName){
@@ -219,41 +231,129 @@ public class Janus {
             this.serviceName = serviceName;
         }
 
+        /**
+         * constructs {@link Janus} with a {@link EurekaServerList}
+         * @param eurekaServiceUrl the url Eureka is listening on
+         * @param useSecure whether or not to communicate with discovered services in a secure manor.
+         * @param useInternalIp whether or not to communicate with discovered services using a private IP address.
+         * @return the Builder
+         */
+        public Builder withEureka(String eurekaServiceUrl, boolean useSecure, boolean useInternalIp) {
+            ConfigurationManager.getConfigInstance().setProperty("eureka.registration.enabled", "false");
+            ConfigurationManager.getConfigInstance().setProperty("eureka.region", "default");
+            ConfigurationManager.getConfigInstance().setProperty("eureka.serviceUrl.default", eurekaServiceUrl);
+
+            DiscoveryManager discoveryManager = DiscoveryManager.getInstance();
+            discoveryManager.initComponent(new MyDataCenterInstanceConfig(), new DefaultEurekaClientConfig());
+
+            this.serverList = new EurekaServerList(serviceName, useSecure, useInternalIp);
+            return this;
+        }
+
+        /**
+         * constructs {@link Janus} using the given urls with a {@link ConstServerList}.
+         * @param urls the urls of the service instances that {@link Janus} will discover.
+         * @return the Builder
+         */
         public Builder withServers(String...urls){
+            Preconditions.checkNotNull(urls, "'urls cannot be null'");
             this.serverList = new ConstServerList(serviceName, urls);
             return this;
         }
 
+        /**
+         * constructs {@link Janus} with a {@link RandomLoadBalancer}. This is the default {@link LoadBalancer} that
+         * the Builder will use if not overridden.
+         * @return the Builder
+         */
         public Builder withRandomLoadBalancing(){
             this.loadBalancer = new RandomLoadBalancer();
             return this;
         }
 
+        /**
+         * constructs {@link Janus} with a {@link SessionLoadBalancer}.
+         * @return the Builder
+         */
+        public Builder withSessionLoadBalancing(){
+            this.loadBalancer = new SessionLoadBalancer();
+            return this;
+        }
+
+        /**
+         * constructs {@link Janus} with a {@link ZoneAwareLoadBalancer}.
+         *
+         * @param zone the zone that constructed {@link Janus} instance in running in.
+         * @return the Builder
+         */
+        public Builder withZoneAwareLoadBalancing(String zone){
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(zone), "'zone' cannot be null or empty.");
+            this.loadBalancer = new ZoneAwareLoadBalancer(serviceName, zone, metricRegistry);
+            return this;
+        }
+
+        /**
+         * constructs {@link Janus} with a {@link ServerList}
+         * @param serverList the {@link ServerList} to construct {@link Janus} with
+         * @return the Builder
+         */
         public Builder withServerList(ServerList serverList){
+            Preconditions.checkNotNull(serverList, "'serverList cannot be null'");
             this.serverList = serverList;
             return this;
         }
 
+        /**
+         * constructs {@link Janus} with a {@link LoadBalancer}
+         * @param loadBalancer {@link LoadBalancer} to construct {@link Janus} with
+         * @return the Builder
+         */
         public Builder withLoadBalancer(LoadBalancer loadBalancer){
+            Preconditions.checkNotNull(loadBalancer, "'loadBalancer cannot be null'");
             this.loadBalancer = loadBalancer;
             return this;
         }
 
+        /**
+         * constructs {@link Janus} with a {@link StatsFactory}.
+         * @param statsFactory the {@link StatsFactory} to construct {@link Janus} with
+         * @return the Builder
+         */
         public Builder withStatsFactory(StatsFactory statsFactory){
+            Preconditions.checkNotNull(statsFactory, "'statsFactory cannot be null'");
             this.statsFactory = statsFactory;
             return this;
         }
 
+        /**
+         * constructs {@link Janus} with a {@link MetricRegistry}
+         * @param metricRegistry the {@link MetricRegistry} to construct {@link Janus} with
+         * @return the Builder
+         */
         public Builder withMetricRegistry(MetricRegistry metricRegistry){
+            Preconditions.checkNotNull(metricRegistry, "'metricRegistry cannot be null'");
             this.metricRegistry = metricRegistry;
+            if(loadBalancer instanceof ZoneAwareLoadBalancer){
+                //need to re-create the ZoneAwareLoadBalancer with the new MetricRegistry
+                withZoneAwareLoadBalancing(((ZoneAwareLoadBalancer) loadBalancer).getZone());
+            }
             return this;
         }
 
+        /**
+         * constructs {@link Janus} with the given refreshIntervalInMillis
+         * @param refreshIntervalInMillis the interval to refresh {@Janus}'s internal cache of server instances
+         * @return the Builder
+         */
         public Builder withRefreshIntervalInMillis(long refreshIntervalInMillis){
             this.refreshIntervalInMillis = refreshIntervalInMillis;
             return this;
         }
 
+        /**
+         * Builds the {@link Janus} instance
+         * @return {@link Janus} instance
+         */
         public Janus build(){
             setDefaults();
             return new Janus(serviceName, serverList, loadBalancer, statsFactory, refreshIntervalInMillis);
@@ -265,9 +365,6 @@ public class Janus {
             }
             if(loadBalancer == null){
                 loadBalancer = new RandomLoadBalancer();
-            }
-            if(metricRegistry == null){
-                metricRegistry = new MetricRegistry();
             }
             if(statsFactory == null){
                 statsFactory = new ServerStatsFactory(ServerStats.class, metricRegistry);

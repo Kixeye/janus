@@ -26,5 +26,10 @@ package com.kixeye.core.janus;
  */
 public interface StatsFactory {
 
+    /**
+     * Create an instance of {@link ServerStats} for the given {@link ServerInstance}
+     * @param serverInstance the {@link ServerInstance} to create stats for
+     * @return instance of {@link ServerStats}
+     */
     ServerStats createServerStats(ServerInstance serverInstance);
 }
