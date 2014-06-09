@@ -342,7 +342,7 @@ public class Janus {
 
         /**
          * constructs {@link Janus} with the given refreshIntervalInMillis
-         * @param refreshIntervalInMillis the interval to refresh {@Janus}'s internal cache of server instances
+         * @param refreshIntervalInMillis the interval to refresh {@link Janus}'s internal cache of server instances
          * @return the Builder
          */
         public Builder withRefreshIntervalInMillis(long refreshIntervalInMillis){
