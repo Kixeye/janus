@@ -251,6 +251,16 @@ public class Janus {
         }
 
         /**
+         * constructs {@link Janus} with a pre-configured {@link EurekaServerList}
+         * @param serverList the pre-configured EurekaServerList to user for service discovery
+         * @return the builder
+         */
+        public Builder withEureka( EurekaServerList serverList) {
+            this.serverList = serverList;
+            return this;
+        }
+
+        /**
          * constructs {@link Janus} using the given urls with a {@link ConstServerList}.
          * @param urls the urls of the service instances that {@link Janus} will discover.
          * @return the Builder
