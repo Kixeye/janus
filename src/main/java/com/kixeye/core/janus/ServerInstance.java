@@ -22,7 +22,6 @@ package com.kixeye.core.janus;
 import com.netflix.config.ConfigurationManager;
 import com.netflix.config.DynamicLongProperty;
 import com.netflix.config.DynamicPropertyFactory;
-import scala.annotation.meta.getter;
 
 /**
  * Represents a server instance within a service cluster. Used to communicate information about the

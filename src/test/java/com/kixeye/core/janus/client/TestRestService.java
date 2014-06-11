@@ -19,12 +19,25 @@
  */
 package com.kixeye.core.janus.client;
 
-import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream;
-import com.google.common.base.Charsets;
-import com.kixeye.core.transport.dto.Envelope;
-import com.kixeye.core.transport.serde.SerDeConfiguration;
-import com.kixeye.core.transport.serde.converter.JsonMessageSerDe;
-import com.netflix.config.ConfigurationManager;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.cert.X509Certificate;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.UUID;
+import java.util.regex.Pattern;
+
 import org.apache.commons.configuration.AbstractConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.jce.X509Principal;
@@ -68,25 +81,14 @@ import org.springframework.web.context.ConfigurableWebApplicationContext;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.config.annotation.DelegatingWebMvcConfiguration;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-import java.security.Security;
-import java.security.cert.X509Certificate;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.UUID;
-import java.util.regex.Pattern;
 
+import com.google.common.base.Charsets;
+import com.kixeye.core.transport.dto.Envelope;
+import com.kixeye.core.transport.serde.SerDeConfiguration;
+import com.kixeye.core.transport.serde.converter.JsonMessageSerDe;
+import com.netflix.config.ConfigurationManager;
+
+@SuppressWarnings("deprecation")
 @RestController
 @RequestMapping("/")
 @Configuration
@@ -371,7 +373,7 @@ public class TestRestService extends DelegatingWebMvcConfiguration {
         server.addConnector(connector);
     }
 
-    private static void registerHttpsConnector(Server server, InetSocketAddress address, boolean selfSigned,
+	private static void registerHttpsConnector(Server server, InetSocketAddress address, boolean selfSigned,
                                                boolean mutualSsl, String keyStorePath, String keyStoreData, String keyStorePassword, String keyManagerPassword,
                                                String trustStorePath, String trustStoreData, String trustStorePassword, String[] excludedCipherSuites) throws Exception {
         // SSL Context Factory

@@ -97,7 +97,7 @@ public class RestTemplateTest {
         int port1 = SocketUtils.findAvailableTcpPort();
         AnnotationConfigWebApplicationContext context = TestRestService.createContext(port0,port1);
 
-        Map<String,String> params = new HashMap();
+        Map<String,String> params = new HashMap<>();
         params.put("test","goofy");
 
         Janus janus = new Janus(
@@ -157,7 +157,7 @@ public class RestTemplateTest {
         int port1 = SocketUtils.findAvailableTcpPort();
         AnnotationConfigWebApplicationContext context = TestRestService.createContext(port0,port1);
 
-        Map<String,String> params = new HashMap();
+        Map<String,String> params = new HashMap<>();
         params.put("test","goofy");
 
         Janus janus = new Janus(

@@ -209,7 +209,7 @@ public class JanusTest {
     }
 
     //used to assert that a field is of the expected type
-    private void assertFieldType(Janus janus, Class interfaceClass, Class expectedClass){
+    private void assertFieldType(Janus janus, Class<?> interfaceClass, Class<?> expectedClass){
         Field field = ReflectionUtils.findField(Janus.class, null, interfaceClass);
         field.setAccessible(true);
         Assert.assertEquals(expectedClass, ReflectionUtils.getField(field, janus).getClass());

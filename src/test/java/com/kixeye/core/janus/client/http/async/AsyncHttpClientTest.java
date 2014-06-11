@@ -89,11 +89,12 @@ public class AsyncHttpClientTest {
                 new ConstServerList(VIP_TEST, "http://localhost:" + server.getURI().getPort()),
                 new RandomLoadBalancer(),
                 new ServerStatsFactory(ServerStats.class, new MetricRegistry()));
-        AsyncHttpClient client = new AsyncHttpClient(janus, 0);
-
-        ListenableFuture<HttpResponse> responseFuture = client.execute(new HttpRequest(HttpMethod.GET, null, null), "/");
-        HttpResponse response = responseFuture.get(5, TimeUnit.SECONDS);
-        Assert.assertNotNull(response);
+        
+        try (AsyncHttpClient client = new AsyncHttpClient(janus, 0)) {
+	        ListenableFuture<HttpResponse> responseFuture = client.execute(new HttpRequest(HttpMethod.GET, null, null), "/");
+	        HttpResponse response = responseFuture.get(5, TimeUnit.SECONDS);
+	        Assert.assertNotNull(response);
+        }
     }
 
     @Test
@@ -105,11 +106,12 @@ public class AsyncHttpClientTest {
                 new ConstServerList(VIP_TEST, "http://localhost:" + server.getURI().getPort()),
                 new RandomLoadBalancer(),
                 new ServerStatsFactory(ServerStats.class, new MetricRegistry()));
-        AsyncHttpClient client = new AsyncHttpClient(janus, 0);
-
-        ListenableFuture<HttpResponse> responseFuture = client.execute(new HttpRequest(HttpMethod.POST, null, new ByteArrayInputStream(sentData)), "/");
-        HttpResponse response = responseFuture.get(5, TimeUnit.SECONDS);
-        Assert.assertNotNull(response);
-        Assert.assertEquals(new String(sentData, Charsets.US_ASCII).trim(), new String(IOUtils.toByteArray(response.getBody()), Charsets.US_ASCII).trim());
+        
+        try (AsyncHttpClient client = new AsyncHttpClient(janus, 0)) {
+	        ListenableFuture<HttpResponse> responseFuture = client.execute(new HttpRequest(HttpMethod.POST, null, new ByteArrayInputStream(sentData)), "/");
+	        HttpResponse response = responseFuture.get(5, TimeUnit.SECONDS);
+	        Assert.assertNotNull(response);
+	        Assert.assertEquals(new String(sentData, Charsets.US_ASCII).trim(), new String(IOUtils.toByteArray(response.getBody()), Charsets.US_ASCII).trim());
+        }
     }
 }
