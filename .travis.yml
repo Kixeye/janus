@@ -1,4 +1,4 @@
 language: java
 jdk:
   - oraclejdk7
-install: mvn clean test
+install: mvn -U clean test
