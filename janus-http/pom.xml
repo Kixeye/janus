@@ -1,0 +1,74 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>janus-http</artifactId>
+    <name>Janus HTTP</name>
+    <url>https://github.com/Kixeye/janus</url>
+    <description>Janus HTTP library.</description>
+
+    <parent>
+    	<groupId>com.kixeye.janus</groupId>
+        <artifactId>janus-parent</artifactId>
+    	<version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <properties>
+        <relax.version>1.0.0-SNAPSHOT</relax.version>
+        
+        <commons-io.version>2.4</commons-io.version>
+        <jetty.version>9.1.0.v20131115</jetty.version>
+        <jackson.version>2.3.1</jackson.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <junit.version>4.11</junit.version>
+        <mockito.version>1.9.5</mockito.version>
+    </properties>
+
+    <dependencies>
+    	<!-- Janus! -->
+    	<dependency>
+    		<groupId>${parent.groupId}</groupId>
+    		<artifactId>janus-core</artifactId>
+    		<version>${parent.version}</version>
+    	</dependency>
+    	
+    	<!-- Relax -->
+    	<dependency>
+    		<groupId>com.kixeye.relax</groupId>
+    		<artifactId>relax</artifactId>
+    		<version>${relax.version}</version>
+    	</dependency>
+    	
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
+            <scope>test</scope>
+        </dependency>
+		<dependency>
+			<groupId>org.simpleframework</groupId>
+			<artifactId>simple</artifactId>
+			<version>5.1.6</version>
+			<scope>test</scope>
+		</dependency>
+    </dependencies>
+
+</project>

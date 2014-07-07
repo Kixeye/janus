@@ -2,11 +2,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.kixeye.janus</groupId>
-    <artifactId>janus</artifactId>
+    <artifactId>janus-parent</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>Janus</name>
     <url>https://github.com/Kixeye/janus</url>
     <description>Janus is a client-side HTTP and WebSocket client which does client-side service discovery and load balancing.</description>
+    <packaging>pom</packaging>
+    
+    <modules>
+    	<module>janus-core</module>
+    	<module>janus-http</module>
+    	<module>janus-websocket</module>
+    </modules>
 
     <parent>
         <groupId>org.sonatype.oss</groupId>
@@ -52,25 +59,6 @@
         <system>github</system>
         <url>http://github.com/Kixeye/janus/issues#issue/</url>
     </issueManagement>
-
-    <properties>
-        <chassis-transport-api.version>1.0.0-SNAPSHOT</chassis-transport-api.version>
-        <guava.version>14.0.1</guava.version>
-        <commons-io.version>2.4</commons-io.version>
-        <commons-lang3.version>3.3.2</commons-lang3.version>
-        <archaius.version>0.6.0</archaius.version>
-        <eureka.version>1.1.114</eureka.version>
-        <spring.version>4.0.4.RELEASE</spring.version>
-        <jetty.version>9.1.0.v20131115</jetty.version>
-        <httpcomponents.version>4.3.2</httpcomponents.version>
-        <jackson.version>2.3.1</jackson.version>
-        <slf4j.version>1.7.5</slf4j.version>
-        <metrics.version>3.0.1</metrics.version>
-        <junit.version>4.11</junit.version>
-        <mockito.version>1.9.5</mockito.version>
-        <javax-el.version>2.2.4</javax-el.version>
-        <javax-el-api.version>2.2.4</javax-el-api.version>
-    </properties>
 
     <build>
         <extensions>
@@ -182,164 +170,4 @@
         	</plugins>
         </pluginManagement>
     </build>
-
-    <dependencies>
-        <!-- Core! -->
-        <dependency>
-            <groupId>com.kixeye.chassis</groupId>
-            <artifactId>chassis-transport-api</artifactId>
-            <version>${chassis-transport-api.version}</version>
-        </dependency>
-
-        <!-- Misc -->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>${commons-io.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>${commons-lang3.version}</version>
-        </dependency>
-
-        <!-- Netflix/Archaius -->
-        <dependency>
-            <groupId>com.netflix.archaius</groupId>
-            <artifactId>archaius-core</artifactId>
-            <version>${archaius.version}</version>
-        </dependency>
-
-        <!-- Netflix/Eureka -->
-        <dependency>
-            <groupId>com.netflix.eureka</groupId>
-            <artifactId>eureka-client</artifactId>
-            <version>${eureka.version}</version>
-        </dependency>
-
-        <!-- Spring RestTemplate -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
-
-        <!-- Jetty Clients -->
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-client</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-
-        <!-- Apache HTTP -->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>${httpcomponents.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpasyncclient</artifactId>
-            <version>4.0</version>
-        </dependency>
-
-        <!-- Jackson -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-
-        <!-- Logging -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-
-        <!-- Metrics -->
-        <dependency>
-            <groupId>com.codahale.metrics</groupId>
-            <artifactId>metrics-core</artifactId>
-            <version>${metrics.version}</version>
-        </dependency>
-
-        <!-- Test Dependencies -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlets</artifactId>
-            <version>${jetty.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-server</artifactId>
-            <version>${jetty.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-server</artifactId>
-            <version>${jetty.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-servlet</artifactId>
-            <version>${jetty.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.el</groupId>
-            <artifactId>javax.el-api</artifactId>
-            <version>${javax-el-api.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.web</groupId>
-            <artifactId>javax.el</artifactId>
-            <version>${javax-el.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-webmvc</artifactId>
-            <version>${spring.version}</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
 </project>
