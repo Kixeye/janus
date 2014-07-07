@@ -135,7 +135,7 @@ public class DefaultRestHttpClient {
 	}
 	
 	/**
-     * Performs a synchronous http GET request, returning an object of the given responseType converted from the response payload's body
+     * Performs a asynchronous http GET request, returning an object of the given responseType converted from the response payload's body
      *
      * @param path path to the resource to request
      * @param responseType the type of object to convert the response body to. it is assumed that the
@@ -155,7 +155,7 @@ public class DefaultRestHttpClient {
     }
 
     /**
-     * Performs a synchronous http GET request, substituting the given urlVariables into the given path,
+     * Performs a asynchronous http GET request, substituting the given urlVariables into the given path,
      * and returning an object of the given responseType converted from the response payload's body
      *
      * @param path path to the resource to request
@@ -179,7 +179,7 @@ public class DefaultRestHttpClient {
     }
 
     /**
-     * Performs a synchronous http POST request, substituting the given urlVariables into the given path,
+     * Performs a asynchronous http POST request, substituting the given urlVariables into the given path,
      * and returning an object of the given responseType converted from the response payload's body
      *
      * @param path path to the resource to create
@@ -201,7 +201,7 @@ public class DefaultRestHttpClient {
     }
 
     /**
-     * Performs a synchronous http POST request, substituting the given urlVariables into the given path,
+     * Performs a asynchronous http POST request, substituting the given urlVariables into the given path,
      * and returning an object of the given responseType converted from the response payload's body
      *
      * @param path path to the resource to create
@@ -226,7 +226,7 @@ public class DefaultRestHttpClient {
     }
 
     /**
-     * Performs a synchronous http PUT request, storing the given request body at the given path.
+     * Performs a asynchronous http PUT request, storing the given request body at the given path.
      *
      * @param path path to the resource to create
      * @param requestBody an object that will be converted and sent as the request body
@@ -244,7 +244,7 @@ public class DefaultRestHttpClient {
     }
 
     /**
-     * Performs a synchronous http PUT request, storing the given request body at the given path.
+     * Performs a asynchronous http PUT request, storing the given request body at the given path.
      *
      * @param path path to the resource to create
      * @param requestBody an object that will be converted and sent as the request body
@@ -265,7 +265,7 @@ public class DefaultRestHttpClient {
     }
 
     /**
-     * Performs a synchronous http DELETE request, deleting the resource at the given path.
+     * Performs a asynchronous http DELETE request, deleting the resource at the given path.
      *
      * @param path path to the resource to create
      * @throws NoServerAvailableException if no server instance could be found for the given request
@@ -282,7 +282,7 @@ public class DefaultRestHttpClient {
     }
 
     /**
-     * Performs a synchronous http DELETE request, deleting the resource at the given path.
+     * Performs a asynchronous http DELETE request, deleting the resource at the given path.
      *
      * @param path path to the resource to create
      * @param pathVariables variables that will substituted into the given path in the order they appear. For example,
@@ -383,7 +383,7 @@ public class DefaultRestHttpClient {
 	};
 	
 	/**
-	 * A JSON SerDe that uses Jackson.
+	 * A String SerDe.
 	 */
 	public static final RestClientSerDe UTF8_STRING_SER_DE = new RestClientSerDe() {
 		private final byte[] EMPTY = new byte[0];
