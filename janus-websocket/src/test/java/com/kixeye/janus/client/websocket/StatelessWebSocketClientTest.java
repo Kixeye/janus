@@ -42,7 +42,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.util.concurrent.SettableFuture;
 import com.kixeye.chassis.transport.dto.Envelope;
 import com.kixeye.chassis.transport.serde.MessageSerDe;
-import com.kixeye.chassis.transport.serde.converter.JsonMessageSerDe;
+import com.kixeye.chassis.transport.serde.converter.JsonJacksonMessageSerDe;
 import com.kixeye.janus.Janus;
 import com.kixeye.janus.ServerStats;
 import com.kixeye.janus.ServerStatsFactory;
@@ -65,7 +65,7 @@ public class StatelessWebSocketClientTest {
         ConfigurationManager.getConfigInstance().setProperty("janus.shortCircuitDuration", 1000);
         ConfigurationManager.getConfigInstance().setProperty("janus.refreshIntervalInMillis", 500);
 
-        serDe = new JsonMessageSerDe();
+        serDe = new JsonJacksonMessageSerDe();
         
         ServerSocket socketServer = new ServerSocket(0);
 		serverPort = socketServer.getLocalPort();
