@@ -143,7 +143,7 @@ public class SessionLoadBalancer implements LoadBalancer {
 
         public SessionServerTuple(ServerStats stats, int localSessionCount, Logger log) {
             this.stats = stats;
-            this.sessions = Integer.MAX_VALUE;
+            this.sessions = localSessionCount;
 
             // Get session count from Eureka meta-data
             Map<String,String> metadata = ((EurekaServerInstance) stats.getServerInstance()).getInstanceInfo().getMetadata();
@@ -151,7 +151,7 @@ public class SessionLoadBalancer implements LoadBalancer {
                 String strSessions = metadata.get("sessions");
                 if (strSessions != null) {
                     try {
-                        this.sessions = localSessionCount + Integer.parseInt(strSessions);
+                        this.sessions += Integer.parseInt(strSessions);
                     } catch (Exception e) {
                         log.error("Bad session value: " + strSessions);
                     }
