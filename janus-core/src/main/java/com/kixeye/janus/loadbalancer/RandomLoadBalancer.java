@@ -41,11 +41,6 @@ public class RandomLoadBalancer implements LoadBalancer {
      */
     @Override
     public ServerStats choose(Collection<ServerStats> serverStats) {
-        // early out if no servers
-        if (serverStats.isEmpty()) {
-            return null;
-        }
-
         // filter down list to available servers
         List<ServerStats> availableServers = new ArrayList<>(serverStats.size());
         for (ServerStats s : serverStats) {

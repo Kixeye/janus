@@ -19,15 +19,6 @@
  */
 package com.kixeye.janus.loadbalancer;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.kixeye.janus.ServerStats;
-import com.kixeye.janus.serverlist.EurekaServerInstance;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
@@ -35,6 +26,15 @@ import java.util.PriorityQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.kixeye.janus.ServerStats;
+import com.kixeye.janus.serverlist.EurekaServerInstance;
 
 /**
  * Eureka specific load balancer which selects a server instance with the

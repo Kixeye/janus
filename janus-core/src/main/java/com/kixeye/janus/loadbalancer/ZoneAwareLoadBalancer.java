@@ -122,11 +122,6 @@ public class ZoneAwareLoadBalancer implements LoadBalancer {
      */
     @Override
     public ServerStats choose(Collection<ServerStats> serverStats) {
-        // early out if no servers
-        if (serverStats.isEmpty()) {
-            return null;
-        }
-
         // cache properties to speed up loop
         double maxRequestsPerSecond = propMaxRequestsPerSecond.get();
         double escapeAreaThreshold = propEscapeAreaThreshold.get();

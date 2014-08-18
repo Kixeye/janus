@@ -154,6 +154,11 @@ public class Janus {
      */
     public ServerStats getServer() {
         updateServerList();
+        
+    	if (servers.isEmpty()) {
+    		return null;
+    	}
+    	
         //TODO filter out unavailable servers before sending to loadBalancer?
         return loadBalancer.choose(servers.values());
     }
