@@ -75,6 +75,16 @@ public class EurekaServerList implements ServerList {
         this.useSecure = useSecure;
         this.useInternalIp = useInternalIp;
         this.discoveryClient = discoveryClient;
+        
+        // wait for refresh
+        try {
+        	long startTime = System.currentTimeMillis();
+	        while (discoveryClient.getLastRefreshTime() < 0 && System.currentTimeMillis() - startTime < 5000) {
+	        	Thread.sleep(100);
+	        }
+        } catch (Exception e) {
+        	throw new RuntimeException(e);
+        }
     }
 
     /**
