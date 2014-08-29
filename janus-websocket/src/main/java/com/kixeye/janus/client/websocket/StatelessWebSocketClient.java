@@ -26,7 +26,6 @@ import com.kixeye.janus.ServerInstance;
 import com.kixeye.janus.ServerStats;
 import com.kixeye.janus.client.exception.NoServerAvailableException;
 import com.kixeye.janus.client.exception.RetriesExceededException;
-
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
 import org.eclipse.jetty.websocket.api.WriteCallback;
@@ -38,7 +37,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -61,8 +59,7 @@ public class StatelessWebSocketClient implements Closeable {
     private final int numRetries;
     private final String relativeUrl;
     private final WebSocketListener listener;
-    private final Map<ServerStats,Session> sessions = new ConcurrentHashMap<>();
-    private final Map<Session,Object> sessionLocks = new ConcurrentHashMap<Session,Object>();
+    private final ConcurrentHashMap<ServerStats,Session> sessions = new ConcurrentHashMap<>();
     private final WebSocketClient webSocketClient;
 
     /**
@@ -105,7 +102,7 @@ public class StatelessWebSocketClient implements Closeable {
         SendWrapper<ServerStats> wrapped = new SendWrapper<ServerStats>() {
             @Override
             public void execute(final Session session, ServerStats server) throws IOException {
-                synchronized (sessionLocks.get(session)) {
+                synchronized (session) {
                     session.getRemote().sendBytes(data);
                 }
             }
@@ -207,8 +204,7 @@ public class StatelessWebSocketClient implements Closeable {
                 // if no longer valid, remove it and try again without
                 // counting as a retry since not really a failure
                 if (!session.isOpen()) {
-                    sessionLocks.remove(session);
-                    sessions.remove(server);
+                    sessions.remove(server,session);
                     continue;
                 }
             } else {
@@ -216,9 +212,14 @@ public class StatelessWebSocketClient implements Closeable {
                 ServerInstance instance = server.getServerInstance();
                 String newUrl = (instance.isSecure() ? "wss://" : "ws://") + instance.getHost() + ":" + instance.getWebsocketPort() + relativeUrl;
                 try {
-                    session = webSocketClient.connect(new ProxyWebSocketListener(server), new URI(newUrl)).get(1000, TimeUnit.MILLISECONDS);
-                    sessions.put(server,session);
-                    sessionLocks.put(session, new Object());
+                    synchronized (this) {
+                        // verify another thread has not already created a new session and then make one if needed
+                        session = sessions.get(server);
+                        if (session == null) {
+                            session = webSocketClient.connect(new ProxyWebSocketListener(server), new URI(newUrl)).get(1000, TimeUnit.MILLISECONDS);
+                            sessions.put(server, session);
+                        }
+                    }
                 } catch (Exception e) {
                     logger.debug("Received connection exception, retrying another server", e);
                     server.incrementErrors();
@@ -235,8 +236,7 @@ public class StatelessWebSocketClient implements Closeable {
                 } catch (IOException e) {
                     logger.debug("Received send exception, retrying another server", e);
                     server.incrementErrors();
-                    sessionLocks.remove(session);
-                    sessions.remove(server);
+                    sessions.remove(server,session);
                 }
             }
 
