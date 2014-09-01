@@ -19,13 +19,6 @@
  */
 package com.kixeye.janus;
 
-import java.lang.reflect.Field;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.codahale.metrics.MetricRegistry;
 import com.kixeye.janus.Janus.Builder;
 import com.kixeye.janus.loadbalancer.LoadBalancer;
@@ -34,6 +27,11 @@ import com.kixeye.janus.loadbalancer.ZoneAwareLoadBalancer;
 import com.kixeye.janus.serverlist.ConfigServerList;
 import com.kixeye.janus.serverlist.ConstServerList;
 import com.netflix.config.ConfigurationManager;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.lang.reflect.Field;
 //import com.kixeye.janus.Janus.Builder;
 
 public class JanusTest {
@@ -85,7 +83,6 @@ public class JanusTest {
     }
 
     @Test
-    @Ignore("fix")
     public void ShortCircuitTest() throws InterruptedException {
         Janus janus = new Janus(
                 VIP_TEST,

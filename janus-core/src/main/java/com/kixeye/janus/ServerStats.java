@@ -84,7 +84,13 @@ public class ServerStats {
         this.metrics.register(name(objectId, server.getId(), "latency"), this.latencyHistogram);
 
         // internal metrics
-        this.errorsPerSecond = new SlidingTimeWindowReservoir(1, TimeUnit.SECONDS);
+        this.errorsPerSecond = new SlidingTimeWindowReservoir(1, TimeUnit.SECONDS, new Clock() {
+            private long start = System.nanoTime();
+            @Override
+            public long getTick() {
+                return System.nanoTime() - start;
+            }
+        });
     }
 
     /**
