@@ -28,6 +28,8 @@ import com.codahale.metrics.*;
 import com.google.common.base.Preconditions;
 import com.netflix.config.DynamicLongProperty;
 import com.netflix.config.DynamicPropertyFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *  The default {@link ServerStats} implementation used by Janus
@@ -37,6 +39,8 @@ import com.netflix.config.DynamicPropertyFactory;
  *  @author cbarry@kixeye.com
  */
 public class ServerStats {
+    private final Logger logger = LoggerFactory.getLogger(ServerStats.class);
+
     protected final DynamicLongProperty propErrorThreshold = DynamicPropertyFactory.getInstance().getLongProperty("janus.errorThresholdPerSec", 5);
 
     protected MetricRegistry metrics;
@@ -166,7 +170,9 @@ public class ServerStats {
         errorsPerSecond.update(1);
 
         // should we short circuit the server?
-        if ( errorsPerSecond.size() >= propErrorThreshold.get()) {
+        int errorCount = errorsPerSecond.size();
+        if ( errorCount >= propErrorThreshold.get()) {
+            logger.info("Short circuiting <{}> because too many errors <{}>", getServerInstance().getId(), errorCount);
             circuitBreakerTrippedCounter.inc();
             server.tripCircuitBreaker();
         }
