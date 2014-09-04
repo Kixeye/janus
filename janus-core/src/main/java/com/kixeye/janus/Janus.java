@@ -195,7 +195,7 @@ public class Janus {
                 Map.Entry<String, ServerStats> entry = iter.next();
                 ServerInstance s = entry.getValue().getServerInstance();
                 if (!s.tick()) {
-                    logger.info("Janus removing service instance <" + s.getId() + "> due to timeout.");
+                    logger.info("Janus removing service instance <{}> due to timeout.", s.getId());
                     iter.remove();
                 }
             }
