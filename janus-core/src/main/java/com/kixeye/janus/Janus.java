@@ -159,7 +159,7 @@ public class Janus {
     		return null;
     	}
     	
-        //TODO filter out unavailable servers before sending to loadBalancer?
+        //TODO: filter out unavailable servers before sending to loadBalancer?
         return loadBalancer.choose(servers.values());
     }
 
@@ -195,6 +195,7 @@ public class Janus {
                 Map.Entry<String, ServerStats> entry = iter.next();
                 ServerInstance s = entry.getValue().getServerInstance();
                 if (!s.tick()) {
+                    logger.info("Janus removing service instance <" + s.getId() + "> due to timeout.");
                     iter.remove();
                 }
             }
