@@ -36,7 +36,7 @@ public class EurekaServerInstance extends ServerInstance {
 
     // track time since instance has been updated
     private long lastUpdateTime = System.currentTimeMillis();
-    private DynamicLongProperty propInstanceTimeout = DynamicPropertyFactory.getInstance().getLongProperty("janus.InstanceTimeOutInMillis", 65000);
+    private DynamicLongProperty propInstanceTimeout = DynamicPropertyFactory.getInstance().getLongProperty("janus.InstanceTimeOutInMillis", 125000);
 
     public EurekaServerInstance(String serviceName, String url) {
         super(serviceName, url);
