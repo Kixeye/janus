@@ -172,7 +172,7 @@ public class ServerStats {
         // should we short circuit the server?
         int errorCount = errorsPerSecond.size();
         if ( errorCount >= propErrorThreshold.get()) {
-            logger.info("Short circuiting <{}> because too many errors <{}>", getServerInstance().getId(), errorCount);
+            logger.warn("Short circuiting <{}> because too many errors <{}>", getServerInstance().getId(), errorCount);
             circuitBreakerTrippedCounter.inc();
             server.tripCircuitBreaker();
         }
