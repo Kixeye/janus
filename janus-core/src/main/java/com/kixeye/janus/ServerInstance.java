@@ -203,7 +203,7 @@ public class ServerInstance {
     }
 
     /**
-     * Get the amount of time until the server instance's circuit breaker is
+     * Get the number of seconds until the server instance's circuit breaker is
      * no longer tripped.
      * @return remaining time
      */
@@ -211,7 +211,7 @@ public class ServerInstance {
         if (isShortCircuited()) {
             long delta = shortCircuitExpiration - System.currentTimeMillis();
             if (delta > 0) {
-                return delta * 1000.0;
+                return delta / 1000.0;
             }
         }
         return 0.0;
@@ -331,7 +331,7 @@ public class ServerInstance {
         }
 
         String host;
-        int port = -1;
+        int port;
         int colonIdx = url.indexOf(':');
         if (colonIdx == -1) {
             host = url; // default

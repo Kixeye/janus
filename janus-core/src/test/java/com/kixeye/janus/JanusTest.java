@@ -124,12 +124,8 @@ public class JanusTest {
         stats.incrementErrors();
         Assert.assertEquals(stats.getServerInstance().isShortCircuited(), true);
 
-        // are we getting a "reasonable" short circuit time out
-        Assert.assertTrue(stats.getServerInstance().getCircuitBreakerRemainingTime() > 0.0);
-
         // this is a second short circuit in under the duration so timeout is longer
-        Thread.sleep(1000);
-        Assert.assertEquals(stats.getServerInstance().isShortCircuited(), true);
+        Assert.assertTrue(stats.getServerInstance().getCircuitBreakerRemainingTime() > 1.0);
     }
 
     @Test
