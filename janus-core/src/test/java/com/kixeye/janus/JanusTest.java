@@ -29,7 +29,6 @@ import com.kixeye.janus.serverlist.ConstServerList;
 import com.netflix.config.ConfigurationManager;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -84,7 +83,6 @@ public class JanusTest {
     }
 
     @Test
-    @Ignore
     public void ShortCircuitTest() throws InterruptedException {
         Janus janus = new Janus(
                 VIP_TEST,
@@ -111,7 +109,7 @@ public class JanusTest {
         Assert.assertNull(stats2);
 
         // wait 1 seconds and the instance should return to normal
-        Thread.sleep(2000);
+        Thread.sleep(1005);
         Assert.assertEquals(stats.getServerInstance().isShortCircuited(), false);
 
         // we should get a server again since the short circuit expired
@@ -127,10 +125,10 @@ public class JanusTest {
         Assert.assertEquals(stats.getServerInstance().isShortCircuited(), true);
 
         // are we getting a "reasonable" short circuit time out
-        Assert.assertTrue( stats.getServerInstance().getCircuitBreakerRemainingTime() > 0.0);
+        Assert.assertTrue(stats.getServerInstance().getCircuitBreakerRemainingTime() > 0.0);
 
         // this is a second short circuit in under the duration so timeout is longer
-        Thread.sleep(1005);
+        Thread.sleep(1000);
         Assert.assertEquals(stats.getServerInstance().isShortCircuited(), true);
     }
 

@@ -51,6 +51,7 @@ public class DefaultRestHttpClient {
 	private static final Logger logger = LoggerFactory.getLogger(DefaultRestHttpClient.class);
 	
 	private static final String USER_AGENT_NAME = "Janus" + DefaultRestHttpClient.class.getSimpleName();
+    private static final long MAX_WAIT_SECONDS = 30;
 
 	private final AsyncRestClient client;
 	private final Janus janus;
@@ -168,7 +169,7 @@ public class DefaultRestHttpClient {
         FunctionWrapper<T> wrapped = new FunctionWrapper<T>() {
             @Override
             public HttpResponse<T> execute(String url) throws Exception {
-                return client.get(url, contentType, responseType).waitForComplete(10, TimeUnit.SECONDS).get();
+                return client.get(url, contentType, responseType).waitForComplete(MAX_WAIT_SECONDS, TimeUnit.SECONDS).get();
             }
         };
         return executeWithLoadBalancer(path, wrapped);
@@ -192,7 +193,7 @@ public class DefaultRestHttpClient {
         FunctionWrapper<T> wrapped = new FunctionWrapper<T>() {
             @Override
             public HttpResponse<T> execute(String url) throws Exception {
-                return client.get(url, contentType, responseType, pathVariables).waitForComplete(10, TimeUnit.SECONDS).get();
+                return client.get(url, contentType, responseType, pathVariables).waitForComplete(MAX_WAIT_SECONDS, TimeUnit.SECONDS).get();
             }
         };
         return executeWithLoadBalancer(path, wrapped);
@@ -214,7 +215,7 @@ public class DefaultRestHttpClient {
         FunctionWrapper<T> wrapped = new FunctionWrapper<T>() {
             @Override
             public HttpResponse<T> execute(String url) throws Exception {
-                return client.post(url, contentType, contentType, requestBody, responseType).waitForComplete(10, TimeUnit.SECONDS).get();
+                return client.post(url, contentType, contentType, requestBody, responseType).waitForComplete(MAX_WAIT_SECONDS, TimeUnit.SECONDS).get();
             }
         };
         return executeWithLoadBalancer(path, wrapped);
@@ -239,7 +240,7 @@ public class DefaultRestHttpClient {
         FunctionWrapper<T> wrapped = new FunctionWrapper<T>() {
             @Override
             public HttpResponse<T> execute(String url) throws Exception {
-                return client.post(url, contentType, contentType, requestBody, responseType, pathVariables).waitForComplete(10, TimeUnit.SECONDS).get();
+                return client.post(url, contentType, contentType, requestBody, responseType, pathVariables).waitForComplete(MAX_WAIT_SECONDS, TimeUnit.SECONDS).get();
             }
         };
         return executeWithLoadBalancer(path, wrapped);
@@ -257,7 +258,7 @@ public class DefaultRestHttpClient {
         FunctionWrapper<Void> wrapped = new FunctionWrapper<Void>() {
             @Override
             public HttpResponse<Void> execute(String url) throws Exception {
-                return client.put(url, contentType, contentType, requestBody).waitForComplete(10, TimeUnit.SECONDS).get();
+                return client.put(url, contentType, contentType, requestBody).waitForComplete(MAX_WAIT_SECONDS, TimeUnit.SECONDS).get();
             }
         };
         executeWithLoadBalancer(path, wrapped);
@@ -278,7 +279,7 @@ public class DefaultRestHttpClient {
         FunctionWrapper<Void> wrapped = new FunctionWrapper<Void>() {
             @Override
             public HttpResponse<Void> execute(String url) throws Exception {
-                return client.put(url, contentType, contentType, requestBody, pathVariables).waitForComplete(10, TimeUnit.SECONDS).get();
+                return client.put(url, contentType, contentType, requestBody, pathVariables).waitForComplete(MAX_WAIT_SECONDS, TimeUnit.SECONDS).get();
             }
         };
         executeWithLoadBalancer(path, wrapped);
@@ -295,7 +296,7 @@ public class DefaultRestHttpClient {
         FunctionWrapper<Void> wrapped = new FunctionWrapper<Void>() {
             @Override
             public HttpResponse<Void> execute(String url) throws Exception {
-                return client.delete(url).waitForComplete(10, TimeUnit.SECONDS).get();
+                return client.delete(url).waitForComplete(MAX_WAIT_SECONDS, TimeUnit.SECONDS).get();
             }
         };
         executeWithLoadBalancer(path, wrapped);
@@ -315,7 +316,7 @@ public class DefaultRestHttpClient {
         FunctionWrapper<Void> wrapped = new FunctionWrapper<Void>() {
             @Override
             public HttpResponse<Void> execute(String url) throws Exception {
-                return client.delete(url, pathVariables).waitForComplete(10, TimeUnit.SECONDS).get();
+                return client.delete(url, pathVariables).waitForComplete(MAX_WAIT_SECONDS, TimeUnit.SECONDS).get();
             }
         };
         executeWithLoadBalancer(path, wrapped);

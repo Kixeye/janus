@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 public class ServerStats {
     private final Logger logger = LoggerFactory.getLogger(ServerStats.class);
 
-    protected final DynamicLongProperty propErrorThreshold = DynamicPropertyFactory.getInstance().getLongProperty("janus.errorThresholdPerSec", 5);
+    protected final DynamicLongProperty propErrorThreshold = DynamicPropertyFactory.getInstance().getLongProperty("janus.errorThresholdPerSec", 10);
 
     protected MetricRegistry metrics;
     protected ServerInstance server;
