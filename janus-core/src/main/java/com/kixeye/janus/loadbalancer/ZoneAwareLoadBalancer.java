@@ -21,7 +21,7 @@ package com.kixeye.janus.loadbalancer;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -116,12 +116,12 @@ public class ZoneAwareLoadBalancer implements LoadBalancer {
     }
 
     /**
-     * @param serverStats the server instances to choose from
+     * @param availableServerStats the server instances to choose from
      * @return the nearest, less loaded server instance
-     * @see {@link LoadBalancer#choose(java.util.Collection)}
+     * @see {@link LoadBalancer#choose(java.util.List)}
      */
     @Override
-    public ServerStats choose(Collection<ServerStats> serverStats) {
+    public ServerStats choose(List<ServerStats> availableServerStats) {
         // cache properties to speed up loop
         double maxRequestsPerSecond = propMaxRequestsPerSecond.get();
         double escapeAreaThreshold = propEscapeAreaThreshold.get();
@@ -130,12 +130,9 @@ public class ZoneAwareLoadBalancer implements LoadBalancer {
 
         // find the best available server
         MetaData max = null;
-        for (ServerStats stat : serverStats) {
+        for (ServerStats stat : availableServerStats) {
             ServerStats s = (ServerStats) stat;
                     ServerInstance instance = s.getServerInstance();
-            if (!instance.isAvailable()) {
-                continue;
-            }
 
             MetaData meta = new MetaData();
             meta.location = locations.getUnchecked(s);

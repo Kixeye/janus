@@ -19,9 +19,9 @@
  */
 package com.kixeye.janus.loadbalancer;
 
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.Map;
+import java.util.List;
+import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -70,20 +70,15 @@ public class SessionLoadBalancer implements LoadBalancer {
     /**
      * Selects a server instance with the smallest number of active sessions.
      *
-     * @param serverStats the collection of server instance to choose from
+     * @param availableServerStats the collection of server instance to choose from
      * @return the server with the fewest sessions
      */
     @Override
-    public ServerStats choose(Collection<ServerStats> serverStats) {
+    public ServerStats choose(List<ServerStats> availableServerStats) {
         try {
             // Sort servers by number of sessions
-            PriorityQueue<SessionServerTuple> pq = new PriorityQueue<>(serverStats.size(), SessionServerTuple.comparator);
-            for (ServerStats stats : serverStats) {
-                // ignore short-circuited servers
-                if (!stats.getServerInstance().isAvailable()) {
-                    continue;
-                }
-
+            PriorityQueue<SessionServerTuple> pq = new PriorityQueue<>(availableServerStats.size(), SessionServerTuple.comparator);
+            for (ServerStats stats : availableServerStats) {
                 // reset incremental session count if the Eureka data has been updated
                 EurekaServerInstance instance = (EurekaServerInstance) stats.getServerInstance();
                 LocalSessionCount localSessions = incrementalSessions.get(instance.getId());
@@ -97,7 +92,7 @@ public class SessionLoadBalancer implements LoadBalancer {
                 }
 
                 // add server to priority queue to sort by total session count
-                pq.add(new SessionServerTuple((ServerStats) stats, additionalSessions, log));
+                pq.add(new SessionServerTuple(stats, additionalSessions, log));
             }
             SessionServerTuple top = pq.peek();
             if (top == null) {
