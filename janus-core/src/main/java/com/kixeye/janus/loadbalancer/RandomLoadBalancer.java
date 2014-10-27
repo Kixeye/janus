@@ -19,8 +19,6 @@
  */
 package com.kixeye.janus.loadbalancer;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
@@ -32,32 +30,17 @@ import com.kixeye.janus.ServerStats;
  * @author cbarry@kixeye.com
  */
 public class RandomLoadBalancer implements LoadBalancer {
-	private Random random = new Random(this.hashCode());
+    private Random random = new Random(this.hashCode());
 
     /**
-     * @param serverStats the collection of {@link com.kixeye.janus.ServerStats} to choose from
+     * @param availableServerStats the collection of {@link com.kixeye.janus.ServerStats} to choose from
      * @return the chosen {@link com.kixeye.janus.ServerStats}
-     * @see {@link LoadBalancer#choose(java.util.Collection)}
+     * @see {@link LoadBalancer#choose(java.util.List)}
      */
     @Override
-    public ServerStats choose(Collection<ServerStats> serverStats) {
-        // filter down list to available servers
-        List<ServerStats> availableServers = new ArrayList<>(serverStats.size());
-        for (ServerStats s : serverStats) {
-            if (s.getServerInstance().isAvailable()) {
-                availableServers.add(s);
-            }
-        }
-
-        // done if no available servers
-        if (availableServers.isEmpty()) {
-            return null;
-        }
-
-        // randomly pick one of the available servers
-
-        int index = random.nextInt(availableServers.size());
-        return availableServers.get(index);
+    public ServerStats choose(List<ServerStats> availableServerStats) {
+        int index = random.nextInt(availableServerStats.size());
+        return availableServerStats.get(index);
     }
 
 }
