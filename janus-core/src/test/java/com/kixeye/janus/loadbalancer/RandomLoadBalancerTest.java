@@ -31,25 +31,6 @@ import java.util.ArrayList;
 
 public class RandomLoadBalancerTest {
     @Test
-    public void noServerTest() {
-        RandomLoadBalancer lb = new RandomLoadBalancer();
-        ServerStats stat = lb.choose( new ArrayList<ServerStats>() );
-        Assert.assertNull(stat);
-    }
-
-    @Test
-    public void noAvailableServerTest() {
-        ServerInstance serverInstance = new ServerInstance("dummy","dummy","localhost",false,80,-1);
-        serverInstance.setAvailable(false);
-        ServerStats serverStats = new ServerStats();
-        serverStats.setServerInstance(serverInstance);
-
-        RandomLoadBalancer lb = new RandomLoadBalancer();
-        ServerStats stat = lb.choose(Lists.newArrayList(serverStats));
-        Assert.assertNull(stat);
-    }
-
-    @Test
     public void oneAvailableServerTest() {
         ServerInstance serverInstance = new ServerInstance("dummy","dummy","localhost",false,80,-1);
         serverInstance.setAvailable(true);

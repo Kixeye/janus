@@ -21,19 +21,19 @@ package com.kixeye.janus;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.kixeye.janus.loadbalancer.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.kixeye.janus.loadbalancer.LoadBalancer;
-import com.kixeye.janus.loadbalancer.RandomLoadBalancer;
-import com.kixeye.janus.loadbalancer.SessionLoadBalancer;
-import com.kixeye.janus.loadbalancer.ZoneAwareLoadBalancer;
 import com.kixeye.janus.serverlist.ConfigServerList;
 import com.kixeye.janus.serverlist.ConstServerList;
 import com.kixeye.janus.serverlist.EurekaServerList;
@@ -154,13 +154,21 @@ public class Janus {
      */
     public ServerStats getServer() {
         updateServerList();
-        
-    	if (servers.isEmpty()) {
-    		return null;
-    	}
-    	
-        //TODO: filter out unavailable servers before sending to loadBalancer?
-        return loadBalancer.choose(servers.values());
+
+        Collection<ServerStats> serverStats = servers.values();
+
+        List<ServerStats> availableServerStats = new ArrayList<>(serverStats.size());
+        for (ServerStats s : serverStats) {
+            if (s.getServerInstance().isAvailable()) {
+                availableServerStats.add(s);
+            }
+        }
+
+        // done if no available servers
+        if (availableServerStats.isEmpty()) {
+            return null;
+        }
+        return loadBalancer.choose(availableServerStats);
     }
 
     private void updateServerList() {
@@ -276,6 +284,16 @@ public class Janus {
          */
         public Builder withRandomLoadBalancing(){
             this.loadBalancer = new RandomLoadBalancer();
+            return this;
+        }
+
+        /**
+         * constructs {@link Janus} with a {@link RandomLoadBalancer}. This is the default {@link LoadBalancer} that
+         * the Builder will use if not overridden.
+         * @return the Builder
+         */
+        public Builder withServerSideLoadBalancing(){
+            this.loadBalancer = new ServerSideLoadBalancer();
             return this;
         }
 
