@@ -180,10 +180,10 @@ public class Janus {
         try {
             // has the update interval been met?
             long now = System.currentTimeMillis();
-            if (nextUpdateTime > now) {
+            if (getRefreshInterval() == 0 || nextUpdateTime > now) {
                 return;
             } else {
-                nextUpdateTime = now + refreshInterval.get();
+                nextUpdateTime = now + getRefreshInterval();
             }
 
             // update server stats with current availability
@@ -261,7 +261,7 @@ public class Janus {
          * @param serverList the pre-configured EurekaServerList to user for service discovery
          * @return the builder
          */
-        public Builder withEureka( EurekaServerList serverList) {
+        public Builder withEureka(EurekaServerList serverList) {
             this.serverList = serverList;
             return this;
         }
@@ -294,6 +294,7 @@ public class Janus {
          */
         public Builder withServerSideLoadBalancing(){
             this.loadBalancer = new ServerSideLoadBalancer();
+            this.refreshIntervalInMillis = 0L;
             return this;
         }
 
