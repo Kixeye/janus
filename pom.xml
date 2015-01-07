@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.kixeye.janus</groupId>
     <artifactId>janus-parent</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
     <name>Janus</name>
     <url>https://github.com/Kixeye/janus</url>
     <description>Janus is a client-side HTTP and WebSocket client which does client-side service discovery and load balancing.</description>
