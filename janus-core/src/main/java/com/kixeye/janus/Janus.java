@@ -101,7 +101,7 @@ public class Janus {
         this.serverList = serverList;
         this.loadBalancer = loadBalancer;
         this.statsFactory = statsFactory;
-        updateServerList();
+        initializeServerList();
     }
 
     /**
@@ -117,7 +117,7 @@ public class Janus {
         this.loadBalancer = loadBalancer;
         this.statsFactory = statsFactory;
         setRefreshInterval(refreshInterval);
-        updateServerList();
+        initializeServerList();
     }
 
     /**
@@ -169,6 +169,17 @@ public class Janus {
             return null;
         }
         return loadBalancer.choose(availableServerStats);
+    }
+
+    private void initializeServerList() {
+        try {
+            for (ServerInstance s : serverList.getListOfServers()) {
+                ServerStats stat = statsFactory.createServerStats(s);
+                servers.put(s.getId(), stat);
+            }
+        } catch (Exception e) {
+            logger.error("Exception initializing the server list", e);
+        }
     }
 
     private void updateServerList() {
@@ -271,7 +282,7 @@ public class Janus {
          * @param urls the urls of the service instances that {@link Janus} will discover.
          * @return the Builder
          */
-        public Builder withServers(String...urls){
+        public Builder withServers(String...urls) {
             Preconditions.checkNotNull(urls, "'urls cannot be null'");
             this.serverList = new ConstServerList(serviceName, urls);
             return this;
@@ -282,7 +293,7 @@ public class Janus {
          * the Builder will use if not overridden.
          * @return the Builder
          */
-        public Builder withRandomLoadBalancing(){
+        public Builder withRandomLoadBalancing() {
             this.loadBalancer = new RandomLoadBalancer();
             return this;
         }
@@ -292,7 +303,7 @@ public class Janus {
          * the Builder will use if not overridden.
          * @return the Builder
          */
-        public Builder withServerSideLoadBalancing(){
+        public Builder withServerSideLoadBalancing() {
             this.loadBalancer = new ServerSideLoadBalancer();
             this.refreshIntervalInMillis = 0L;
             return this;
